@@ -1,0 +1,105 @@
+<div class="chat-wrapper">
+  <mat-card class="chat-card">
+
+    <!-- Encabezado -->
+    <mat-card-header class="chat-header">
+      <mat-icon mat-card-avatar class="header-icon">computer</mat-icon>
+      <mat-card-title>Asistente de Diagnóstico</mat-card-title>
+      <mat-card-subtitle>Hardware Troubleshooting con IA</mat-card-subtitle>
+    </mat-card-header>
+
+    <!-- Área de mensajes -->
+    <mat-card-content>
+      <div #chatContainer class="messages-container scrollbar-thin">
+
+        @for (msg of messages(); track msg.timestamp) {
+          <div class="message-row" [class.user-row]="msg.type === 'user'">
+
+            <!-- Burbuja de mensaje -->
+            <div class="bubble" [ngClass]="msg.type + '-bubble'">
+
+              <!-- Ícono de categoría (solo en respuestas del bot con diagnóstico) -->
+              @if (msg.diagnosis) {
+                <div
+                  class="category-badge"
+                  [style.background-color]="categoryColors[msg.diagnosis.categoria]"
+                  [matTooltip]="'Confianza: ' + confidencePercent(msg.diagnosis.confianza)"
+                >
+                  <mat-icon>{{ categoryIcons[msg.diagnosis.categoria] || 'help_outline' }}</mat-icon>
+                  <span>{{ msg.diagnosis.categoria }}</span>
+                </div>
+              }
+
+              <!-- Texto del mensaje -->
+              <p class="bubble-text">{{ msg.text }}</p>
+
+              <!-- Chips de probabilidades -->
+              @if (msg.diagnosis) {
+                <div class="probabilities">
+                  <span class="prob-label">Probabilidades:</span>
+                  <mat-chip-set>
+                    @for (entry of msg.diagnosis.probabilidades | keyvalue; track entry.key) {
+                      <mat-chip
+                        [style.background-color]="categoryColors[entry.key]"
+                        class="prob-chip"
+                      >
+                        {{ entry.key }}: {{ confidencePercent(+entry.value) }}
+                      </mat-chip>
+                    }
+                  </mat-chip-set>
+                </div>
+              }
+
+              <!-- Timestamp -->
+              <span class="bubble-time">
+                {{ msg.timestamp | date: 'HH:mm' }}
+              </span>
+            </div>
+
+          </div>
+        }
+
+        <!-- Indicador de carga -->
+        @if (isLoading()) {
+          <div class="message-row">
+            <div class="bubble bot-bubble loading-bubble">
+              <mat-spinner diameter="20" />
+              <span>Analizando síntoma...</span>
+            </div>
+          </div>
+        }
+
+      </div>
+    </mat-card-content>
+
+    <!-- Área de entrada -->
+    <mat-card-actions class="input-area">
+      <mat-form-field appearance="outline" class="input-field">
+        <mat-label>Describe el problema de tu equipo…</mat-label>
+        <textarea
+          matInput
+          rows="2"
+          [value]="userInput()"
+          (input)="userInput.set($any($event.target).value)"
+          (keydown)="onKeydown($event)"
+          [disabled]="isLoading()"
+          placeholder="Ej: El computador no enciende y hace pitidos"
+        ></textarea>
+        <mat-hint>Presiona Enter para enviar, Shift+Enter para nueva línea</mat-hint>
+      </mat-form-field>
+
+      <button
+        mat-fab
+        color="primary"
+        class="send-btn"
+        [disabled]="!canSend()"
+        (click)="sendMessage()"
+        matTooltip="Enviar diagnóstico"
+        aria-label="Enviar"
+      >
+        <mat-icon>send</mat-icon>
+      </button>
+    </mat-card-actions>
+
+  </mat-card>
+</div>

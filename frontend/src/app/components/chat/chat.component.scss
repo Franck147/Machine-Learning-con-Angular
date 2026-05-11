@@ -1,0 +1,180 @@
+// Layout principal
+.chat-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 24px 16px;
+  background: linear-gradient(135deg, #e8eaf6 0%, #fce4ec 100%);
+}
+
+.chat-card {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+  overflow: hidden;
+}
+
+// Encabezado
+.chat-header {
+  background: linear-gradient(135deg, #3949ab 0%, #1a237e 100%);
+  color: white;
+  padding: 16px 20px;
+
+  mat-card-title   { color: white; font-size: 1.2rem; }
+  mat-card-subtitle { color: rgba(255, 255, 255, 0.8); }
+
+  .header-icon {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    padding: 8px;
+    color: white;
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+// Contenedor de mensajes
+.messages-container {
+  height: 460px;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #fafafa;
+}
+
+// Filas de mensaje
+.message-row {
+  display: flex;
+  justify-content: flex-start;
+
+  &.user-row {
+    justify-content: flex-end;
+  }
+}
+
+// Burbujas
+.bubble {
+  max-width: 75%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  position: relative;
+  word-break: break-word;
+
+  &.user-bubble {
+    background: linear-gradient(135deg, #3949ab, #5c6bc0);
+    color: white;
+    border-bottom-right-radius: 4px;
+
+    .bubble-time { color: rgba(255, 255, 255, 0.7); }
+  }
+
+  &.bot-bubble {
+    background: white;
+    color: #212121;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  &.error-bubble {
+    background: #ffebee;
+    color: #c62828;
+    border-bottom-left-radius: 4px;
+    border-left: 3px solid #e53935;
+  }
+
+  &.loading-bubble {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    color: #757575;
+    font-style: italic;
+  }
+}
+
+.bubble-text {
+  margin: 0 0 6px;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.bubble-time {
+  font-size: 0.7rem;
+  color: #9e9e9e;
+  display: block;
+  text-align: right;
+  margin-top: 4px;
+}
+
+// Badge de categoría
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+
+  mat-icon { font-size: 16px; height: 16px; width: 16px; }
+}
+
+// Probabilidades
+.probabilities {
+  margin-top: 10px;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 8px;
+
+  .prob-label {
+    font-size: 0.75rem;
+    color: #757575;
+    display: block;
+    margin-bottom: 6px;
+  }
+}
+
+.prob-chip {
+  color: white !important;
+  font-size: 0.72rem !important;
+  height: 22px !important;
+}
+
+// Área de entrada
+.input-area {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px 16px 16px !important;
+  border-top: 1px solid #e0e0e0;
+  background: white;
+
+  .input-field {
+    flex: 1;
+    margin: 0;
+  }
+
+  .send-btn {
+    flex-shrink: 0;
+    margin-bottom: 18px; // Alinea con el textarea
+  }
+}
+
+// Responsive para móvil
+@media (max-width: 600px) {
+  .chat-wrapper { padding: 0; }
+  .chat-card { border-radius: 0 !important; min-height: 100vh; }
+  .messages-container { height: calc(100vh - 280px); }
+  .bubble { max-width: 90%; }
+}

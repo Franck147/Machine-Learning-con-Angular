@@ -1,0 +1,10 @@
+flask==3.1.3
+flask-cors==6.0.2
+scikit-learn==1.8.0
+pandas==3.0.2
+python-dotenv==1.2.2
+gunicorn==26.0.0
+# Supabase — versión 2.10.0 compatible con Python 3.14 (sin pyiceberg)
+supabase==2.10.0
+httpx>=0.27,<0.29
+websockets>=11,<16

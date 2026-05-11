@@ -1,0 +1,37 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+export interface DiagnosisRequest {
+  mensaje: string;
+}
+
+export interface DiagnosisResponse {
+  categoria: string;
+  confianza: number;
+  solucion: string;
+  probabilidades: Record<string, number>;
+}
+
+@Injectable({ providedIn: 'root' })
+export class DiagnosisService {
+  private readonly http = inject(HttpClient);
+
+  // En desarrollo usa el proxy Angular; en producción reemplaza con la URL real
+  private readonly apiUrl = '/api/diagnosticar';
+
+  diagnose(mensaje: string): Observable<DiagnosisResponse> {
+    return this.http
+      .post<DiagnosisResponse>(this.apiUrl, { mensaje } satisfies DiagnosisRequest)
+      .pipe(catchError(this.handleError));
+  }
+
+  private handleError(error: HttpErrorResponse): Observable<never> {
+    const msg =
+      error.status === 0
+        ? 'No se pudo conectar con el servidor. Verifica que el backend esté activo.'
+        : error.error?.error ?? `Error del servidor (${error.status}).`;
+    return throwError(() => new Error(msg));
+  }
+}

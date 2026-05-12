@@ -5,25 +5,25 @@ import { catchError } from 'rxjs/operators';
 
 export interface DiagnosisRequest {
   mensaje: string;
+  marca?:  string;
+  modelo?: string;
 }
 
 export interface DiagnosisResponse {
-  categoria: string;
-  confianza: number;
-  solucion: string;
+  categoria:      string;
+  confianza:      number;
+  solucion:       string;
   probabilidades: Record<string, number>;
 }
 
 @Injectable({ providedIn: 'root' })
 export class DiagnosisService {
-  private readonly http = inject(HttpClient);
+  private readonly http    = inject(HttpClient);
+  private readonly apiUrl  = '/api/diagnosticar';
 
-  // En desarrollo usa el proxy Angular; en producción reemplaza con la URL real
-  private readonly apiUrl = '/api/diagnosticar';
-
-  diagnose(mensaje: string): Observable<DiagnosisResponse> {
+  diagnose(request: DiagnosisRequest): Observable<DiagnosisResponse> {
     return this.http
-      .post<DiagnosisResponse>(this.apiUrl, { mensaje } satisfies DiagnosisRequest)
+      .post<DiagnosisResponse>(this.apiUrl, request)
       .pipe(catchError(this.handleError));
   }
 

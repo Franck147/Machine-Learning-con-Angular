@@ -2,7 +2,8 @@
 app.py — Servidor Flask para el Asistente de Diagnóstico de Hardware.
 
 Rutas:
-  POST /api/diagnosticar  — recibe síntoma (+ marca/modelo opcional) y devuelve diagnóstico
+  POST /api/diagnosticar  — recibe síntoma y devuelve diagnóstico + solución
+  POST /api/feedback      — registra si el diagnóstico fue útil (feedback loop)
   GET  /api/health        — verifica que el servidor esté activo
 """
 
@@ -13,7 +14,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
-from model_logic import DiagnosticModel
+from model_logic import DiagnosticModel, CONFIDENCE_THRESHOLD
 
 # ---------------------------------------------------------------------------
 # Configuración inicial
@@ -52,102 +53,157 @@ else:
 # Modelo de ML
 # ---------------------------------------------------------------------------
 model = DiagnosticModel()
-logger.info("Modelo de diagnóstico cargado con %d categorías.", len(model.CATEGORIES))
+logger.info("Modelo de diagnóstico cargado y entrenado (9 categorías, LinearSVC).")
 
 # ---------------------------------------------------------------------------
-# Soluciones de respaldo (cuando Supabase no está disponible)
+# Preguntas de clarificación por nivel de confianza
 # ---------------------------------------------------------------------------
-FALLBACK_SOLUTIONS = {
+CLARIFICATION_QUESTIONS = [
+    "No pude identificar el problema con certeza. ¿Puedes ser más específico? "
+    "Describe qué pasa exactamente: ¿hay sonidos, mensajes de error, luces, o el equipo no reacciona en absoluto?",
+    "Necesito más detalles para diagnosticar correctamente. "
+    "¿El problema ocurre al encender, durante el uso, o en un momento específico? "
+    "¿Qué hardware tienes (GPU, RAM, tipo de disco)?",
+    "Con esa descripción no puedo determinar la categoría con seguridad. "
+    "¿Puedes mencionar qué componente crees que está afectado y cuándo comenzó el problema?",
+]
+
+# ---------------------------------------------------------------------------
+# Soluciones de respaldo (sin Supabase)
+# ---------------------------------------------------------------------------
+FALLBACK_SOLUTIONS: dict[str, str] = {
     "Energia": (
         "Verifica el cable de alimentación y la fuente de poder (PSU). "
         "Mide voltajes con multímetro (+12V, +5V, +3.3V). "
-        "Comprueba el conector ATX 24-pin y el EPS 8-pin del CPU. "
-        "Si el equipo enciende y se apaga de inmediato, revisa ventiladores y aplica pasta térmica nueva. "
-        "Marcas comunes a revisar: Corsair RM/HX, EVGA SuperNOVA, Seasonic Focus, be quiet! Straight Power."
+        "Si el equipo enciende y se apaga de inmediato, revisa ventiladores y aplica pasta térmica nueva."
     ),
     "Video": (
-        "Conecta el monitor al puerto de la GPU dedicada (no a la tarjeta integrada). "
-        "Reinserta la GPU en el slot PCIe x16 y limpia contactos con alcohol isopropílico. "
-        "Verifica conectores de alimentación PCIe (6+2 pin o 16-pin 12VHPWR para RTX 40). "
-        "Prueba con otro cable HDMI/DisplayPort o en otro monitor. "
-        "Si hay artefactos, actualiza o reinstala drivers NVIDIA/AMD desde sitio oficial."
+        "Conecta el monitor a la GPU dedicada (no a la tarjeta integrada). "
+        "Reinserta la GPU en el slot PCIe y limpia contactos con alcohol isopropílico. "
+        "Verifica conectores de alimentación PCIe de la GPU."
     ),
     "BIOS": (
-        "Verifica que la RAM esté en los slots correctos (A2/B2 para dual channel según manual). "
-        "Prueba con un módulo a la vez para identificar el defectuoso. "
-        "Para resetear BIOS: retira la pila CR2032 por 5 minutos o usa el jumper/botón CMOS. "
-        "Si el CPU es nuevo (Ryzen 5000/7000 o Intel 12a/13a gen), puede requerir actualización de BIOS. "
-        "Revisa el manual de tu motherboard (ASUS, MSI, Gigabyte, ASRock) para el procedimiento correcto."
+        "Verifica que la RAM esté en los slots correctos (A2/B2 para dual channel). "
+        "Prueba con un módulo a la vez. Para resetear BIOS: retira la pila CR2032 "
+        "por 5 minutos o usa el jumper CMOS."
     ),
     "Almacenamiento": (
-        "Verifica cables SATA y alimentación del disco. Comprueba en BIOS que el puerto SATA esté en modo AHCI. "
-        "Usa CrystalDiskInfo para revisar estado S.M.A.R.T. — reallocated sectors altos indican falla inminente. "
-        "Para NVMe (Samsung 980 Pro, WD Black SN850, Seagate FireCuda): verifica que el slot M.2 sea PCIe Gen4. "
-        "Ejecuta chkdsk /f /r en Windows o fsck en Linux para reparar el sistema de archivos."
-    ),
-    "Temperatura": (
-        "Monitorea temperaturas con HWiNFO64 o Core Temp. CPU no debe superar 90°C bajo carga sostenida. "
-        "Limpia disipador y ventiladores de polvo. Reaplica pasta térmica (Noctua NT-H1, Thermal Grizzly Kryonaut). "
-        "Verifica que el cooler esté correctamente montado con presión uniforme (Noctua, be quiet!, Cooler Master). "
-        "En AIO (Corsair H150i, NZXT Kraken, DeepCool LS720): verifica que la bomba funcione y el radiador no esté obstruido. "
-        "Mejora el flujo de aire del gabinete: ventiladores frontales de entrada, traseros/superiores de salida."
+        "Verifica cables SATA y alimentación del disco. Comprueba en BIOS que el "
+        "puerto SATA esté en modo AHCI. Usa CrystalDiskInfo para revisar S.M.A.R.T. "
+        "Ejecuta chkdsk /f /r si hay errores del sistema de archivos."
     ),
     "Red": (
-        "Verifica el driver de red: Intel i219/i225, Realtek RTL8125. Descárgalo del sitio del fabricante de la motherboard. "
-        "Prueba con otro cable Ethernet o en otro puerto del router/switch. "
-        "En Windows: ejecuta 'netsh winsock reset' y 'netsh int ip reset' como administrador y reinicia. "
-        "Para WiFi (Intel AX200/AX210, ASUS PCE-AX58BT): verifica antenas conectadas y canal WiFi no saturado. "
-        "Revisa el Administrador de dispositivos para verificar que el adaptador no tenga código de error."
+        "Verifica que el adaptador de red esté habilitado en el Administrador de dispositivos. "
+        "Ejecuta 'ipconfig /release' y 'ipconfig /renew' en CMD. "
+        "Reinstala los drivers de la tarjeta de red desde el sitio del fabricante."
+    ),
+    "Audio": (
+        "Verifica en el Administrador de dispositivos que el dispositivo de audio esté activo. "
+        "Reinstala los drivers de audio (Realtek o el fabricante correspondiente). "
+        "Comprueba que el conector de audio esté en el jack correcto (verde = salida)."
+    ),
+    "Temperatura": (
+        "Limpia los ventiladores y disipadores con aire comprimido. "
+        "Reaplica pasta térmica en el procesador. "
+        "Verifica que todos los ventiladores del chasis estén funcionando y el flujo de aire sea correcto."
+    ),
+    "USB": (
+        "Prueba el dispositivo en otro puerto USB. "
+        "En el Administrador de dispositivos, desinstala los controladores USB y reinicia para que se reinstalen. "
+        "Verifica que los conectores internos del panel frontal estén bien conectados a la placa."
+    ),
+    "Drivers": (
+        "Abre el Administrador de dispositivos y busca dispositivos con exclamación amarilla. "
+        "Descarga los drivers directamente desde el sitio del fabricante del hardware. "
+        "Considera usar DDU (Display Driver Uninstaller) para limpiar drivers de GPU antes de reinstalar."
     ),
 }
 
 
-def build_symptom_text(mensaje: str, marca: str = "", modelo: str = "") -> str:
-    """Combina síntoma + marca/modelo para mejorar la precisión del modelo."""
-    parts = []
-    if marca:
-        parts.append(marca.strip())
-    if modelo:
-        parts.append(modelo.strip())
-    parts.append(mensaje.strip())
-    return " ".join(parts)
-
-
-def get_solution_from_supabase(category: str) -> str | None:
-    """Consulta la solución para la categoría en catalog_solutions."""
+def get_solution_from_supabase(
+    category: str,
+    brand: str | None = None,
+    series: str | None = None,
+) -> str | None:
+    """
+    Busca la solución más específica disponible en este orden de prioridad:
+      1. brand + series + category
+      2. brand + category (sin series)
+      3. category genérica (sin marca)
+    """
     if not supabase:
         return None
     try:
-        result = (
+        # Intento 1: brand + series + category
+        if brand and series:
+            r = (
+                supabase.table("catalog_solutions")
+                .select("solution_text")
+                .eq("category", category)
+                .eq("brand", brand)
+                .eq("series", series)
+                .limit(1)
+                .execute()
+            )
+            if r.data:
+                return r.data[0]["solution_text"]
+
+        # Intento 2: brand + category
+        if brand:
+            r = (
+                supabase.table("catalog_solutions")
+                .select("solution_text")
+                .eq("category", category)
+                .eq("brand", brand)
+                .is_("series", "null")
+                .limit(1)
+                .execute()
+            )
+            if r.data:
+                return r.data[0]["solution_text"]
+
+        # Intento 3: genérico (sin marca)
+        r = (
             supabase.table("catalog_solutions")
             .select("solution_text")
             .eq("category", category)
+            .is_("brand", "null")
             .limit(1)
             .execute()
         )
-        if result.data:
-            return result.data[0]["solution_text"]
+        if r.data:
+            return r.data[0]["solution_text"]
+
     except Exception as exc:
         logger.error("Error consultando Supabase: %s", exc)
     return None
 
 
-def log_diagnosis(query: str, marca: str, modelo: str,
-                  category: str, confidence: float, solution: str) -> None:
-    """Guarda el diagnóstico en diagnosis_logs."""
+def log_diagnosis(
+    query: str,
+    category: str,
+    confidence: float,
+    solution: str,
+    brand: str | None = None,
+    series: str | None = None,
+) -> str | None:
+    """Guarda el diagnóstico y devuelve el log_id generado."""
     if not supabase:
-        return
+        return None
     try:
-        supabase.table("diagnosis_logs").insert({
-            "user_query": query,
-            "hardware_brand": marca or None,
-            "hardware_model": modelo or None,
-            "predicted_category": category,
-            "accuracy": confidence,
-            "solution_provided": solution,
+        result = supabase.table("diagnosis_logs").insert({
+            "user_query":          query,
+            "predicted_category":  category,
+            "accuracy":            confidence,
+            "solution_provided":   solution,
+            "brand":               brand or None,
+            "series":              series or None,
         }).execute()
+        if result.data:
+            return result.data[0]["id"]
     except Exception as exc:
         logger.error("Error guardando log en Supabase: %s", exc)
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -159,7 +215,9 @@ def health():
     return jsonify({
         "status": "ok",
         "model": "DiagnosticModel v2.0",
-        "categories": model.CATEGORIES,
+        "algoritmo": "TF-IDF + LinearSVC",
+        "categorias": DiagnosticModel.CATEGORIES,
+        "umbral_confianza": CONFIDENCE_THRESHOLD,
     }), 200
 
 
@@ -169,17 +227,14 @@ def diagnosticar():
     Body esperado (JSON):
         {
             "mensaje": "El computador no enciende y hace pitidos",
-            "marca":   "ASUS",     (opcional)
-            "modelo":  "ROG Z790"  (opcional)
+            "contexto": ["no enciende"]   // opcional — mensajes previos
         }
 
-    Respuesta:
-        {
-            "categoria":    "BIOS",
-            "confianza":    0.87,
-            "solucion":     "...",
-            "probabilidades": { "Energia": 0.05, ... }
-        }
+    Respuesta normal:
+        { "categoria", "confianza", "solucion", "probabilidades", "log_id" }
+
+    Respuesta con baja confianza:
+        { "necesita_mas_info": true, "pregunta", "probabilidades", "confianza_maxima" }
     """
     data = request.get_json(silent=True)
 
@@ -190,36 +245,92 @@ def diagnosticar():
     if len(mensaje) < 3:
         return jsonify({"error": "El mensaje es demasiado corto para diagnosticar."}), 400
 
-    marca  = data.get("marca", "").strip()
-    modelo = data.get("modelo", "").strip()
+    # Marca y serie opcionales (aportan contexto al diagnóstico)
+    marca: str  = (data.get("marca")  or "").strip()
+    serie: str  = (data.get("serie")  or "").strip()
 
-    # Construir texto enriquecido con marca/modelo para el modelo ML
-    symptom_text = build_symptom_text(mensaje, marca, modelo)
+    # Combinar con contexto previo si existe (multi-turno)
+    contexto: list[str] = data.get("contexto", [])
+    texto_completo = " ".join(contexto + [mensaje]) if contexto else mensaje
 
-    # 1. Clasificar con el modelo de ML
-    prediction = model.predict(symptom_text)
-    category   = prediction["category"]
+    # Enriquecer con prefijo de marca para mejor clasificación
+    if marca:
+        prefix = f"[{marca.upper()}"
+        if serie:
+            prefix += f" {serie.upper()}"
+        prefix += "]"
+        texto_completo = f"{prefix} {texto_completo}"
+
+    # Clasificar con el modelo
+    prediction = model.predict(texto_completo)
+    category = prediction["category"]
     confidence = prediction["confidence"]
 
-    # 2. Obtener solución (Supabase con fallback local)
-    solution = get_solution_from_supabase(category) or FALLBACK_SOLUTIONS.get(
-        category, "No se encontró solución para esta categoría."
+    # Respuesta de baja confianza: pedir más información
+    if prediction["low_confidence"]:
+        pregunta = CLARIFICATION_QUESTIONS[len(contexto) % len(CLARIFICATION_QUESTIONS)]
+        logger.info(
+            "Baja confianza (%.0f%%) para: '%s'", confidence * 100, mensaje[:60]
+        )
+        return jsonify({
+            "necesita_mas_info": True,
+            "pregunta": pregunta,
+            "probabilidades": prediction["all_probabilities"],
+            "confianza_maxima": confidence,
+        }), 200
+
+    # Obtener solución: busca primero la específica por marca/serie
+    solution = (
+        get_solution_from_supabase(category, marca or None, serie or None)
+        or FALLBACK_SOLUTIONS.get(category, "No se encontró solución para esta categoría.")
     )
 
-    # 3. Registrar diagnóstico en Supabase
-    log_diagnosis(mensaje, marca, modelo, category, confidence, solution)
+    # Registrar diagnóstico y obtener log_id
+    log_id = log_diagnosis(mensaje, category, confidence, solution, marca or None, serie or None)
 
     logger.info(
         "Diagnóstico: '%s' [%s %s] → %s (%.0f%%)",
-        mensaje[:60], marca or "—", modelo or "—", category, confidence * 100,
+        mensaje[:50], marca, serie, category, confidence * 100
     )
 
     return jsonify({
-        "categoria":      category,
-        "confianza":      confidence,
-        "solucion":       solution,
+        "categoria": category,
+        "confianza": confidence,
+        "solucion": solution,
         "probabilidades": prediction["all_probabilities"],
+        "log_id": log_id,
+        "marca": marca or None,
+        "serie": serie or None,
     }), 200
+
+
+@app.route("/api/feedback", methods=["POST"])
+def feedback():
+    """
+    Body esperado:
+        { "log_id": "uuid", "util": true/false }
+
+    Actualiza el registro de diagnosis_logs con el feedback del usuario.
+    Los logs con feedback positivo pueden usarse para re-entrenar el modelo.
+    """
+    data = request.get_json(silent=True)
+
+    if not data or "log_id" not in data or "util" not in data:
+        return jsonify({"error": "Campos requeridos: log_id, util"}), 400
+
+    log_id = str(data["log_id"])
+    util = bool(data["util"])
+
+    if supabase:
+        try:
+            supabase.table("diagnosis_logs").update({
+                "feedback_util": util,
+            }).eq("id", log_id).execute()
+            logger.info("Feedback '%s' registrado para log %s", util, log_id)
+        except Exception as exc:
+            logger.error("Error guardando feedback: %s", exc)
+
+    return jsonify({"ok": True}), 200
 
 
 # ---------------------------------------------------------------------------

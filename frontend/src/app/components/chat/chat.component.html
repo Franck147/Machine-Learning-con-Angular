@@ -1,257 +1,203 @@
-<div class="techservice-layout">
+<div class="chat-wrapper">
+  <mat-card class="chat-card">
 
-  <!-- ═══════════════════════ SIDEBAR ═══════════════════════ -->
-  <aside class="sidebar">
+    <!-- Encabezado -->
+    <mat-card-header class="chat-header">
+      <mat-icon mat-card-avatar class="header-icon">computer</mat-icon>
+      <mat-card-title>Asistente de Diagnóstico</mat-card-title>
+      <mat-card-subtitle>Hardware Troubleshooting con IA · 9 categorías · 6 marcas</mat-card-subtitle>
+    </mat-card-header>
 
-    <div class="sidebar-brand">
-      <div class="brand-icon">
-        <mat-icon>memory</mat-icon>
-      </div>
-      <div class="brand-text">
-        <span class="brand-name">TechDiag</span>
-        <span class="brand-tagline">Pro Suite</span>
-      </div>
-    </div>
+    <!-- Área de mensajes -->
+    <mat-card-content>
+      <div #chatContainer class="messages-container scrollbar-thin">
 
-    <div class="sidebar-section">
-      <span class="section-label">HERRAMIENTAS</span>
-      <div class="nav-item active">
-        <mat-icon>psychology</mat-icon>
-        <span>Diagnóstico IA</span>
-        <div class="nav-active-indicator"></div>
-      </div>
-      <div class="nav-item disabled">
-        <mat-icon>bar_chart</mat-icon>
-        <span>Estadísticas</span>
-      </div>
-      <div class="nav-item disabled">
-        <mat-icon>menu_book</mat-icon>
-        <span>Base de datos</span>
-      </div>
-    </div>
+        @for (msg of messages(); track msg.timestamp; let i = $index) {
+          <div class="message-row" [class.user-row]="msg.type === 'user'">
+            <div
+              class="bubble"
+              [ngClass]="[
+                msg.type + '-bubble',
+                msg.clarification ? 'clarification-bubble' : ''
+              ]"
+            >
 
-    <div class="sidebar-section">
-      <span class="section-label">CATEGORÍAS RÁPIDAS</span>
-      @for (cat of categoryMeta; track cat.key) {
-        <button class="category-btn" (click)="quickDiagnose(cat.hint)" [matTooltip]="cat.hint">
-          <mat-icon [style.color]="cat.color">{{ cat.icon }}</mat-icon>
-          <span>{{ cat.key }}</span>
-          <mat-icon class="arrow-icon">chevron_right</mat-icon>
-        </button>
-      }
-    </div>
-
-    <div class="sidebar-footer">
-      <div class="engine-status">
-        <span class="status-dot"></span>
-        <div class="status-info">
-          <span class="status-title">Motor IA activo</span>
-          <span class="status-sub">TF-IDF + Naive Bayes</span>
-        </div>
-      </div>
-      <div class="model-info">
-        <span>6 categorías</span>
-        <span>310+ síntomas</span>
-      </div>
-    </div>
-
-  </aside>
-
-  <!-- ═══════════════════════ CONTENIDO PRINCIPAL ═══════════════════════ -->
-  <div class="main-content">
-
-    <!-- ─── TOPBAR ─── -->
-    <header class="topbar">
-      <div class="topbar-left">
-        <mat-icon class="topbar-icon">support_agent</mat-icon>
-        <div class="topbar-titles">
-          <h1>Asistente Técnico Inteligente</h1>
-          <span>Diagnóstico de hardware con IA · Describe el síntoma de tu equipo</span>
-        </div>
-      </div>
-      <div class="topbar-right">
-        <div class="session-badge">
-          <mat-icon>tag</mat-icon>
-          <span>Sesión #{{ sessionId }}</span>
-        </div>
-        <div class="categories-counter">
-          <mat-icon>category</mat-icon>
-          <span>{{ categoryMeta.length }} categorías</span>
-        </div>
-      </div>
-    </header>
-
-    <!-- ─── CHAT AREA ─── -->
-    <div #chatContainer class="chat-area scrollbar-thin">
-
-      @for (msg of messages(); track msg.timestamp) {
-        <div class="message-row" [class.user-row]="msg.type === 'user'">
-
-          @if (msg.type !== 'user') {
-            <div class="avatar bot-avatar">
-              <mat-icon>smart_toy</mat-icon>
-            </div>
-          }
-
-          <div class="bubble" [ngClass]="msg.type + '-bubble'">
-
-            <!-- Encabezado de diagnóstico -->
-            @if (msg.diagnosis) {
-              <div class="diagnosis-header">
-                <div class="category-badge"
-                  [style.background]="'linear-gradient(135deg,' + categoryColors[msg.diagnosis.categoria] + '22, ' + categoryColors[msg.diagnosis.categoria] + '44)'"
-                  [style.border-color]="categoryColors[msg.diagnosis.categoria] + '66'">
-                  <mat-icon [style.color]="categoryColors[msg.diagnosis.categoria]">
-                    {{ categoryIcons[msg.diagnosis.categoria] || 'help_outline' }}
-                  </mat-icon>
-                  <span [style.color]="categoryColors[msg.diagnosis.categoria]">
-                    {{ msg.diagnosis.categoria }}
-                  </span>
-                </div>
-                <div class="confidence-pill" [ngClass]="getConfidenceClass(msg.diagnosis.confianza)"
-                  [matTooltip]="getSeverityLabel(msg.diagnosis.confianza)">
-                  <mat-icon>analytics</mat-icon>
-                  <span>{{ confidencePercent(msg.diagnosis.confianza) }}</span>
-                </div>
-              </div>
-            }
-
-            <!-- Texto del mensaje / solución -->
-            <div class="bubble-text" [class.solution-text]="!!msg.diagnosis">
+              <!-- Badge de categoría (diagnóstico exitoso) -->
               @if (msg.diagnosis) {
-                @for (line of msg.text.split('\n'); track $index) {
-                  @if (line.trim()) {
-                    <p [class.step-line]="line.trim().match('^[0-9]+\\.')">{{ line }}</p>
-                  }
-                }
-              } @else {
-                <p>{{ msg.text }}</p>
-              }
-            </div>
+                <div class="diagnosis-header">
+                  <div
+                    class="category-badge"
+                    [style.background-color]="categoryColors[msg.diagnosis.categoria]"
+                    [matTooltip]="'Confianza: ' + confidencePercent(msg.diagnosis.confianza)"
+                  >
+                    <mat-icon>{{ categoryIcons[msg.diagnosis.categoria] || 'help_outline' }}</mat-icon>
+                    <span>{{ msg.diagnosis.categoria }}</span>
+                  </div>
 
-            <!-- Hardware tag si el usuario indicó marca/modelo -->
-            @if (msg.type === 'user' && (msg.brand || msg.model)) {
-              <div class="hardware-tag">
-                <mat-icon>devices</mat-icon>
-                <span>{{ msg.brand }} {{ msg.model }}</span>
-              </div>
-            }
-
-            <!-- Barras de probabilidad -->
-            @if (msg.diagnosis) {
-              <div class="prob-section">
-                <span class="prob-section-label">
-                  <mat-icon>bar_chart</mat-icon>
-                  Análisis de probabilidades
-                </span>
-                <div class="prob-bars">
-                  @for (entry of msg.diagnosis.probabilidades | keyvalue; track entry.key) {
-                    <div class="prob-bar-item">
-                      <div class="prob-bar-meta">
-                        <mat-icon [style.color]="categoryColors[entry.key]" class="prob-icon">
-                          {{ categoryIcons[entry.key] }}
-                        </mat-icon>
-                        <span class="prob-name">{{ entry.key }}</span>
-                        <span class="prob-pct" [style.color]="categoryColors[entry.key]">
-                          {{ confidencePercent(+entry.value) }}
-                        </span>
-                      </div>
-                      <div class="prob-track">
-                        <div class="prob-fill"
-                          [style.width]="confidencePercent(+entry.value)"
-                          [style.background-color]="categoryColors[entry.key]">
-                        </div>
-                      </div>
+                  @if (msg.marca) {
+                    <div class="brand-badge" [matTooltip]="'Diagnóstico para ' + msg.marca + (msg.serie ? ' ' + msg.serie : '')">
+                      <mat-icon>laptop</mat-icon>
+                      <span>{{ msg.marca }}{{ msg.serie ? ' · ' + msg.serie : '' }}</span>
                     </div>
                   }
                 </div>
-              </div>
-            }
+              }
 
-            <span class="bubble-time">{{ msg.timestamp | date: 'HH:mm:ss' }}</span>
-          </div>
+              <!-- Encabezado de clarificación (baja confianza) -->
+              @if (msg.clarification) {
+                <div class="clarification-header">
+                  <mat-icon>help_outline</mat-icon>
+                  <span>Necesito más información</span>
+                  <span class="conf-hint">(máx. {{ confidencePercent(msg.clarification.confianza_maxima) }})</span>
+                </div>
+              }
 
-          @if (msg.type === 'user') {
-            <div class="avatar user-avatar">
-              <mat-icon>person</mat-icon>
+              <!-- Texto del mensaje -->
+              <p class="bubble-text">{{ msg.text }}</p>
+
+              <!-- Chips de probabilidades -->
+              @if (msg.diagnosis || msg.clarification) {
+                <div class="probabilities">
+                  <span class="prob-label">Probabilidades:</span>
+                  <mat-chip-set>
+                    @for (entry of (msg.diagnosis?.probabilidades ?? msg.clarification?.probabilidades) | keyvalue; track entry.key) {
+                      <mat-chip [style.background-color]="categoryColors[entry.key]" class="prob-chip">
+                        {{ entry.key }}: {{ confidencePercent(+entry.value) }}
+                      </mat-chip>
+                    }
+                  </mat-chip-set>
+                </div>
+              }
+
+              <!-- Feedback (solo diagnósticos con log_id) -->
+              @if (msg.diagnosis && msg.logId) {
+                <div class="feedback-actions">
+                  @if (msg.feedbackSent == null) {
+                    <span class="feedback-label">¿Fue útil este diagnóstico?</span>
+                    <button type="button" mat-icon-button class="feedback-btn positive"
+                      (click)="sendFeedback(i, true)" matTooltip="Sí, fue útil" aria-label="Diagnóstico útil">
+                      <mat-icon>thumb_up</mat-icon>
+                    </button>
+                    <button type="button" mat-icon-button class="feedback-btn negative"
+                      (click)="sendFeedback(i, false)" matTooltip="No fue útil" aria-label="Diagnóstico no útil">
+                      <mat-icon>thumb_down</mat-icon>
+                    </button>
+                  } @else {
+                    <span class="feedback-sent">
+                      <mat-icon>{{ msg.feedbackSent === 'positive' ? 'thumb_up' : 'thumb_down' }}</mat-icon>
+                      {{ msg.feedbackSent === 'positive' ? 'Gracias por tu feedback' : 'Lo tendremos en cuenta' }}
+                    </span>
+                  }
+                </div>
+              }
+
+              <span class="bubble-time">{{ msg.timestamp | date: 'HH:mm' }}</span>
             </div>
-          }
+          </div>
+        }
 
+        <!-- Indicador de carga -->
+        @if (isLoading()) {
+          <div class="message-row">
+            <div class="bubble bot-bubble loading-bubble">
+              <mat-spinner diameter="20" />
+              <span>Analizando síntoma{{ selectedBrand() ? ' para ' + selectedBrand() : '' }}…</span>
+            </div>
+          </div>
+        }
+      </div>
+    </mat-card-content>
+
+    <!-- ──────────────────────────────────────────────────────────────── -->
+    <!-- Selector de Marca / Serie                                        -->
+    <!-- ──────────────────────────────────────────────────────────────── -->
+    <div class="brand-selector">
+      <div class="brand-selector-label">
+        <mat-icon>laptop_mac</mat-icon>
+        <span>Tu equipo:</span>
+        @if (selectedBrand()) {
+          <button type="button" class="clear-brand-btn" (click)="clearBrandSelection()"
+            matTooltip="Quitar selección">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </div>
+
+      <!-- Chips de marcas -->
+      <div class="brand-chips">
+        @for (brand of brands; track brand.name) {
+          <button
+            type="button"
+            class="brand-chip"
+            [class.selected]="selectedBrand() === brand.name"
+            [style.--brand-color]="brand.color"
+            (click)="selectBrand(brand.name)"
+            [attr.aria-pressed]="selectedBrand() === brand.name"
+          >
+            {{ brand.name }}
+          </button>
+        }
+      </div>
+
+      <!-- Chips de series (aparecen al seleccionar marca) -->
+      @if (selectedBrand() && availableSeries().length) {
+        <div class="series-chips">
+          @for (s of availableSeries(); track s.name) {
+            <button
+              type="button"
+              class="series-chip"
+              [class.selected]="selectedSeries() === s.name"
+              [class]="'series-chip type-' + s.type"
+              (click)="selectSeries(s.name)"
+              [attr.aria-pressed]="selectedSeries() === s.name"
+            >
+              {{ s.name }}
+            </button>
+          }
         </div>
       }
 
-      <!-- Indicador de carga -->
-      @if (isLoading()) {
-        <div class="message-row">
-          <div class="avatar bot-avatar">
-            <mat-icon>smart_toy</mat-icon>
-          </div>
-          <div class="bubble bot-bubble loading-bubble">
-            <div class="loading-dots">
-              <span></span><span></span><span></span>
-            </div>
-            <span>Analizando síntoma con IA...</span>
-          </div>
+      <!-- Selección activa -->
+      @if (selectedBrand()) {
+        <div class="selection-active" [style.border-color]="selectedBrandColor()">
+          <mat-icon [style.color]="selectedBrandColor()">check_circle</mat-icon>
+          <span>
+            Diagnosticando para <strong>{{ selectedBrand() }}{{ selectedSeries() ? ' ' + selectedSeries() : '' }}</strong>
+            — recibirás soluciones específicas para tu equipo
+          </span>
         </div>
       }
-
     </div>
 
-    <!-- ─── ÁREA DE ENTRADA ─── -->
-    <div class="input-panel">
+    <!-- Área de entrada -->
+    <mat-card-actions class="input-area">
+      <mat-form-field appearance="outline" class="input-field">
+        <mat-label>Describe el problema de tu equipo…</mat-label>
+        <textarea
+          matInput
+          rows="2"
+          [value]="userInput()"
+          (input)="userInput.set($any($event.target).value)"
+          (keydown)="onKeydown($event)"
+          [disabled]="isLoading()"
+          placeholder="Ej: El computador no enciende y hace pitidos"
+        ></textarea>
+        <mat-hint>Presiona Enter para enviar · Shift+Enter para nueva línea</mat-hint>
+      </mat-form-field>
 
-      <!-- Campos de hardware opcionales -->
-      <div class="hardware-fields">
-        <mat-form-field appearance="outline" class="hw-field">
-          <mat-label>Marca del hardware</mat-label>
-          <mat-icon matPrefix>business</mat-icon>
-          <input matInput
-            [value]="brandInput()"
-            (input)="brandInput.set($any($event.target).value)"
-            placeholder="ASUS, MSI, Intel, Corsair…">
-        </mat-form-field>
+      <button
+        type="button"
+        mat-fab
+        color="primary"
+        class="send-btn"
+        [disabled]="!canSend()"
+        (click)="sendMessage()"
+        matTooltip="Enviar diagnóstico"
+        aria-label="Enviar"
+      >
+        <mat-icon>send</mat-icon>
+      </button>
+    </mat-card-actions>
 
-        <mat-form-field appearance="outline" class="hw-field">
-          <mat-label>Modelo / componente</mat-label>
-          <mat-icon matPrefix>developer_board</mat-icon>
-          <input matInput
-            [value]="modelInput()"
-            (input)="modelInput.set($any($event.target).value)"
-            placeholder="ROG Z790, RTX 4090, SN850X…">
-        </mat-form-field>
-      </div>
-
-      <!-- Área de texto principal -->
-      <div class="symptom-row">
-        <mat-form-field appearance="outline" class="symptom-field">
-          <mat-label>Describe el problema técnico...</mat-label>
-          <textarea matInput
-            class="symptom-textarea"
-            rows="2"
-            [value]="userInput()"
-            (input)="userInput.set($any($event.target).value)"
-            (keydown)="onKeydown($event)"
-            [disabled]="isLoading()"
-            placeholder="Ej: La PC no enciende y emite 3 pitidos cortos. La pantalla permanece en negro…">
-          </textarea>
-          <mat-hint>Enter para enviar &nbsp;·&nbsp; Shift+Enter para nueva línea</mat-hint>
-        </mat-form-field>
-
-        <button mat-fab
-          class="send-btn"
-          [disabled]="!canSend()"
-          (click)="sendMessage()"
-          matTooltip="Diagnosticar síntoma"
-          aria-label="Enviar">
-          @if (isLoading()) {
-            <mat-spinner diameter="22" />
-          } @else {
-            <mat-icon>send</mat-icon>
-          }
-        </button>
-      </div>
-
-    </div>
-
-  </div>
+  </mat-card>
 </div>

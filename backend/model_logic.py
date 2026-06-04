@@ -13,6 +13,12 @@ import numpy as np
 
 CONFIDENCE_THRESHOLD = 0.45
 
+# Carga automática de ejemplos generados por import_dataset.py
+try:
+    from extra_training_data import EXTRA_TRAINING_DATA as _EXTRA
+except ImportError:
+    _EXTRA: list[tuple[str, str]] = []
+
 TRAINING_DATA: list[tuple[str, str]] = [
     # ------------------------------------------------------------------ Energia
     ("el computador no enciende", "Energia"),
@@ -394,6 +400,8 @@ class DiagnosticModel:
     ]
 
     def __init__(self, extra_data: list[tuple[str, str]] | None = None):
+        # Combina: datos base + CSV importado + datos extra (feedback loop)
+        self._extra_data: list[tuple[str, str]] = list(_EXTRA) + (extra_data or [])
         self.pipeline = Pipeline([
             ("tfidf", TfidfVectorizer(
                 ngram_range=(1, 2),
@@ -408,7 +416,6 @@ class DiagnosticModel:
                 cv=3,
             )),
         ])
-        self._extra_data: list[tuple[str, str]] = extra_data or []
         self._train()
 
     def _train(self) -> None:

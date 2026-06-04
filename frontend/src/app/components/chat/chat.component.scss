@@ -331,6 +331,111 @@ $text-dim:    #5a5a5a;
   }
 }
 
+// ─── Alerta de cortocircuito ──────────────────────────────
+.alert-card {
+  width: 100%;
+  border-radius: 12px;
+  border: 2px solid #ff1744;
+  background: linear-gradient(135deg, rgba(139,0,0,.25) 0%, rgba(30,0,0,.4) 100%);
+  padding: 16px;
+  position: relative;
+  box-shadow: 0 0 28px rgba(255,23,68,.4), 0 4px 16px rgba(0,0,0,.5);
+}
+
+
+.alert-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.alert-icon-big {
+  font-size: 36px;
+  height: 36px;
+  width: 36px;
+  color: #ff1744;
+  flex-shrink: 0;
+  animation: icon-blink 1.2s step-start 5;
+}
+
+@keyframes icon-blink {
+  50% { opacity: 0.3; }
+}
+
+.alert-card-title {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.alert-label {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #ff1744;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.alert-subtitle {
+  font-size: 0.78rem;
+  color: rgba(255,100,100,.8);
+}
+
+.alert-desc {
+  font-size: 0.88rem;
+  color: $text;
+  line-height: 1.5;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  background: rgba(0,0,0,.3);
+  border-radius: 8px;
+  border-left: 3px solid #ff1744;
+}
+
+.alert-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.alert-step {
+  font-size: 0.83rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-weight: 500;
+  line-height: 1.4;
+
+  &.danger {
+    background: rgba(180,0,0,.25);
+    color: #ff5252;
+    border-left: 3px solid #ff1744;
+  }
+
+  &.ok {
+    background: rgba(0,100,0,.2);
+    color: #69f0ae;
+    border-left: 3px solid #00c853;
+  }
+}
+
+.alert-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(255,23,68,.12);
+  border-radius: 8px;
+  border: 1px solid rgba(255,23,68,.3);
+  font-size: 0.78rem;
+  color: rgba(255,200,200,.9);
+  font-weight: 600;
+  margin-bottom: 8px;
+
+  mat-icon { font-size: 16px; height: 16px; width: 16px; color: #ff5252; }
+}
+
 // ─── Comentario / opinión ─────────────────────────────────
 .feedback-section {
   margin-top: 10px;

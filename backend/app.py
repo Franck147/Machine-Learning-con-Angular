@@ -117,7 +117,25 @@ FALLBACK_SOLUTIONS: dict[str, str] = {
         "Descarga los drivers directamente desde el sitio del fabricante del hardware. "
         "Considera usar DDU (Display Driver Uninstaller) para limpiar drivers de GPU antes de reinstalar."
     ),
+    "Corto": (
+        "ALERTA: Posible cortocircuito en la placa madre. "
+        "NO enciendas el equipo nuevamente. Desconecta la corriente inmediatamente. "
+        "Lleva el equipo a un laboratorio de reparación electrónica especializado para diagnóstico profesional."
+    ),
 }
+
+# ---------------------------------------------------------------------------
+# Alerta especial para cortocircuito
+# ---------------------------------------------------------------------------
+PASOS_URGENTES_CORTO = [
+    "⛔ NO enciendas el equipo nuevamente bajo ninguna circunstancia",
+    "⛔ NO conectes el cable de corriente eléctrica",
+    "⛔ Si hay olor a quemado, ventila el área y aléjate del equipo",
+    "✅ Desconecta TODOS los cables del equipo ahora mismo",
+    "✅ Lleva el equipo a un laboratorio de reparación electrónica especializado",
+    "✅ Informa al técnico del posible cortocircuito y los síntomas exactos",
+    "✅ Si había líquido o pasta térmica, indica dónde cayó exactamente",
+]
 
 
 def get_solution_from_supabase(
@@ -279,6 +297,25 @@ def diagnosticar():
             "confianza_maxima": confidence,
         }), 200
 
+    # ── Alerta especial: cortocircuito en placa madre ──────────────────────────
+    if category in DiagnosticModel.ALERT_CATEGORIES:
+        solution = FALLBACK_SOLUTIONS["Corto"]
+        log_id = log_diagnosis(mensaje, category, confidence, solution, marca or None, serie or None)
+        logger.warning(
+            "ALERTA CORTO: '%s' → %s (%.0f%%)", mensaje[:60], category, confidence * 100
+        )
+        return jsonify({
+            "categoria":       category,
+            "confianza":       confidence,
+            "solucion":        solution,
+            "probabilidades":  prediction["all_probabilities"],
+            "log_id":          log_id,
+            "marca":           marca or None,
+            "serie":           serie or None,
+            "es_alerta":       True,
+            "pasos_urgentes":  PASOS_URGENTES_CORTO,
+        }), 200
+
     # Obtener solución: busca primero la específica por marca/serie
     solution = (
         get_solution_from_supabase(category, marca or None, serie or None)
@@ -294,13 +331,14 @@ def diagnosticar():
     )
 
     return jsonify({
-        "categoria": category,
-        "confianza": confidence,
-        "solucion": solution,
+        "categoria":      category,
+        "confianza":      confidence,
+        "solucion":       solution,
         "probabilidades": prediction["all_probabilities"],
-        "log_id": log_id,
-        "marca": marca or None,
-        "serie": serie or None,
+        "log_id":         log_id,
+        "marca":          marca or None,
+        "serie":          serie or None,
+        "es_alerta":      False,
     }), 200
 
 

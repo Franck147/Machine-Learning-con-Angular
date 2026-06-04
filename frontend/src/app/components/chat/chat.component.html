@@ -25,6 +25,44 @@
     <div #chatContainer class="messages-container scrollbar-thin">
 
       @for (msg of messages(); track msg.timestamp; let i = $index) {
+
+        <!-- ── ALERTA ESPECIAL: Corto en placa madre ───────────────────────── -->
+        @if (msg.diagnosis?.es_alerta) {
+          <div class="alert-card">
+            <div class="alert-card-header">
+              <mat-icon class="alert-icon-big">warning</mat-icon>
+              <div class="alert-card-title">
+                <span class="alert-label">ALERTA DE RIESGO ELÉCTRICO</span>
+                <span class="alert-subtitle">
+                  Posible cortocircuito en placa madre
+                  · Confianza: {{ confidencePercent(msg.diagnosis!.confianza) }}
+                </span>
+              </div>
+            </div>
+
+            <p class="alert-desc">{{ msg.diagnosis!.solucion }}</p>
+
+            @if (msg.diagnosis!.pasos_urgentes?.length) {
+              <div class="alert-steps">
+                @for (paso of msg.diagnosis!.pasos_urgentes!; track paso) {
+                  <div class="alert-step" [class.danger]="paso.startsWith('⛔')" [class.ok]="paso.startsWith('✅')">
+                    {{ paso }}
+                  </div>
+                }
+              </div>
+            }
+
+            <div class="alert-footer">
+              <mat-icon>local_hospital</mat-icon>
+              <span>Requiere atención en laboratorio de reparación electrónica especializado</span>
+            </div>
+
+            <span class="bubble-time">{{ msg.timestamp | date: 'HH:mm' }}</span>
+          </div>
+        }
+
+        <!-- ── MENSAJE NORMAL ─────────────────────────────────────────────── -->
+        @if (!msg.diagnosis?.es_alerta) {
         <div class="message-row" [class.user-row]="msg.type === 'user'">
           <div class="bubble"
             [ngClass]="[
@@ -188,6 +226,8 @@
             <span class="bubble-time">{{ msg.timestamp | date: 'HH:mm' }}</span>
           </div>
         </div>
+        } <!-- end @if (!msg.diagnosis?.es_alerta) -->
+
       }
 
       <!-- Carga -->

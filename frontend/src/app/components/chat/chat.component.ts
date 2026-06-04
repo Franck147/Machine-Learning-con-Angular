@@ -186,6 +186,7 @@ const CATEGORY_ICONS: Record<string, string> = {
   Temperatura:    'thermostat',
   USB:            'usb',
   Drivers:        'settings',
+  Corto:          'warning',
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -198,6 +199,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Temperatura:    '#ffa726',
   USB:            '#8d6e63',
   Drivers:        '#78909c',
+  Corto:          '#ff1744',
 };
 
 // ─── Estado del comentario por mensaje ────────────────────────────────────────
@@ -249,8 +251,8 @@ export class ChatComponent {
 
   // Stats del sistema
   readonly systemStats = {
-    ejemplos:   2836,
-    categorias: 9,
+    ejemplos:   2870,
+    categorias: 10,
     marcas:     15,
     algoritmo:  'LinearSVC',
   };

@@ -12,13 +12,17 @@ export interface DiagnosisRequest {
 
 export interface DiagnosisResult {
   necesita_mas_info: false;
-  categoria: string;
-  confianza: number;
-  solucion: string;
-  probabilidades: Record<string, number>;
-  log_id: string | null;
-  marca: string | null;
-  serie: string | null;
+  categoria:         string;
+  confianza:         number;
+  solucion:          string;
+  probabilidades:    Record<string, number>;
+  log_id:            string | null;
+  marca:             string | null;
+  serie:             string | null;
+  /** true cuando la categoría es "Corto" — requiere acción inmediata */
+  es_alerta:         boolean;
+  /** Pasos urgentes (solo cuando es_alerta === true) */
+  pasos_urgentes?:   string[];
 }
 
 export interface ClarificationResult {

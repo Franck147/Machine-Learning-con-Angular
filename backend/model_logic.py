@@ -385,19 +385,58 @@ TRAINING_DATA: list[tuple[str, str]] = [
     ("[MSI] BIOS no guarda perfil XMP de RAM al reiniciar", "BIOS"),
     ("[MSI] USB-C no funciona para carga ni transmisión datos", "USB"),
     ("[MSI GS] pantalla 144Hz cae automáticamente a 60Hz sola", "Video"),
+
+    # --------------------------------------------------------------- [CORTO] Placa en corto circuito
+    ("olor a quemado al encender el computador",                  "Corto"),
+    ("humo saliendo de la placa madre al encender",               "Corto"),
+    ("se quemo algo en la placa base al conectar corriente",      "Corto"),
+    ("la placa está en corto circuito",                           "Corto"),
+    ("chispas en la placa madre al conectar la fuente",           "Corto"),
+    ("condensador explotado en la placa madre con sonido",        "Corto"),
+    ("capacitor abultado e inflado visible en la placa",          "Corto"),
+    ("resistencia quemada visible en la placa base",              "Corto"),
+    ("VRM quemado de la placa madre componentes dañados",         "Corto"),
+    ("MOSFET dañado quemado en la placa base",                    "Corto"),
+    ("derrame de líquido en la placa madre causó corto",          "Corto"),
+    ("pasta térmica cayó sobre componentes de la placa",          "Corto"),
+    ("la fuente se dispara el disyuntor al conectar el equipo",   "Corto"),
+    ("la fuente se apaga instantáneamente al intentar encender",  "Corto"),
+    ("marca de quemado visible en la PCB de la placa",            "Corto"),
+    ("olor a plástico quemado desde el interior del gabinete",    "Corto"),
+    ("componente SMD quemado en la placa madre",                  "Corto"),
+    ("cortocircuito en la placa base todo murió",                 "Corto"),
+    ("la placa hizo un corto y se apagó todo el sistema",         "Corto"),
+    ("el equipo hizo un ruido fuerte y dejó de funcionar",        "Corto"),
+    ("hay una mancha negra de quemadura en la placa",             "Corto"),
+    ("el capacitor de la placa explotó con destello",             "Corto"),
+    ("zócalo del procesador quemado con daño físico",             "Corto"),
+    ("la placa madre se calentó excesivamente y murió por calor", "Corto"),
+    ("líquido derramado sobre la placa causó daño eléctrico",     "Corto"),
+    ("daño físico visible por quemadura en la tarjeta madre",     "Corto"),
+    ("la placa no responde y hay olor a quemado fuerte",          "Corto"),
+    ("corto en la placa por pilas o batería derramada",           "Corto"),
+    ("[LENOVO THINKPAD] placa en corto por derrame de líquido",   "Corto"),
+    ("[DELL] componente quemado visible en la placa madre",       "Corto"),
+    ("[HP] condensador reventado en la placa base",               "Corto"),
+    ("[ASUS] corto en VRM de la placa por overclocking extremo",  "Corto"),
+    ("the motherboard is shorted burned component visible",       "Corto"),
+    ("burning smell from motherboard short circuit",              "Corto"),
 ]
 
 
 class DiagnosticModel:
     """
     Clasificador de síntomas de hardware: TF-IDF + LinearSVC calibrado.
-    9 categorías de hardware con umbral de confianza configurable.
+    10 categorías de hardware con umbral de confianza configurable.
     """
 
     CATEGORIES = [
         "Energia", "Video", "BIOS", "Almacenamiento",
-        "Red", "Audio", "Temperatura", "USB", "Drivers",
+        "Red", "Audio", "Temperatura", "USB", "Drivers", "Corto",
     ]
+
+    # Categorías que requieren alerta urgente (no diagnóstico normal)
+    ALERT_CATEGORIES = {"Corto"}
 
     def __init__(self, extra_data: list[tuple[str, str]] | None = None):
         # Combina: datos base + CSV importado + datos extra (feedback loop)

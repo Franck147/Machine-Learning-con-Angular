@@ -20,7 +20,9 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 # Configuración
 # ---------------------------------------------------------------------------
-DEFAULT_CSV = r"C:\Users\11AYCK1P2202A08\Downloads\dataset_diagnosticos_equipos.csv"
+DEFAULT_CSV = os.path.join(
+    os.path.dirname(__file__), "..", "data", "dataset_diagnosticos_equipos.csv"
+)
 OUTPUT_PY   = os.path.join(os.path.dirname(__file__), "extra_training_data.py")
 
 # Mapeo: Componente_Fallido → categoría del modelo

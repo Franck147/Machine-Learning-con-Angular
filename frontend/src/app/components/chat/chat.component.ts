@@ -177,29 +177,31 @@ const TYPE_ICONS: Record<string, string> = {
 
 // ─── Categorías ───────────────────────────────────────────────────────────────
 const CATEGORY_ICONS: Record<string, string> = {
-  Energia:        'bolt',
-  Video:          'monitor',
-  BIOS:           'memory',
-  Almacenamiento: 'storage',
-  Red:            'wifi',
-  Audio:          'volume_up',
-  Temperatura:    'thermostat',
-  USB:            'usb',
-  Drivers:        'settings',
-  Corto:          'warning',
+  Energia:          'bolt',
+  Video:            'monitor',
+  BIOS:             'memory',
+  Almacenamiento:   'storage',
+  Red:              'wifi',
+  Audio:            'volume_up',
+  Temperatura:      'thermostat',
+  USB:              'usb',
+  Drivers:          'settings',
+  Corto:            'warning',
+  SistemaOperativo: 'bug_report',
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Energia:        '#ef5350',
-  Video:          '#42a5f5',
-  BIOS:           '#ab47bc',
-  Almacenamiento: '#66bb6a',
-  Red:            '#26a69a',
-  Audio:          '#ff7043',
-  Temperatura:    '#ffa726',
-  USB:            '#8d6e63',
-  Drivers:        '#78909c',
-  Corto:          '#ff1744',
+  Energia:          '#ef5350',
+  Video:            '#42a5f5',
+  BIOS:             '#ab47bc',
+  Almacenamiento:   '#66bb6a',
+  Red:              '#26a69a',
+  Audio:            '#ff7043',
+  Temperatura:      '#ffa726',
+  USB:              '#8d6e63',
+  Drivers:          '#78909c',
+  Corto:            '#ff1744',
+  SistemaOperativo: '#1565c0',
 };
 
 // ─── Estado del comentario por mensaje ────────────────────────────────────────
@@ -251,8 +253,8 @@ export class ChatComponent {
 
   // Stats del sistema
   readonly systemStats = {
-    ejemplos:   2870,
-    categorias: 10,
+    ejemplos:   2910,
+    categorias: 11,
     marcas:     15,
     algoritmo:  'LinearSVC',
   };

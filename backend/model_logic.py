@@ -421,6 +421,50 @@ TRAINING_DATA: list[tuple[str, str]] = [
     ("[ASUS] corto en VRM de la placa por overclocking extremo",  "Corto"),
     ("the motherboard is shorted burned component visible",       "Corto"),
     ("burning smell from motherboard short circuit",              "Corto"),
+
+    # ─────────────────────────────────── SistemaOperativo — BSOD y fallos Windows
+    # Códigos BSOD más comunes
+    ("pantalla azul CRITICAL_PROCESS_DIED en Windows",                      "SistemaOperativo"),
+    ("BSOD MEMORY_MANAGEMENT al iniciar Windows",                           "SistemaOperativo"),
+    ("error INACCESSIBLE_BOOT_DEVICE pantalla azul Windows",                "SistemaOperativo"),
+    ("SYSTEM_SERVICE_EXCEPTION pantalla azul Windows 10 11",                "SistemaOperativo"),
+    ("IRQL_NOT_LESS_OR_EQUAL pantalla azul al usar el equipo",              "SistemaOperativo"),
+    ("PAGE_FAULT_IN_NONPAGED_AREA BSOD frecuente",                         "SistemaOperativo"),
+    ("KERNEL_SECURITY_CHECK_FAILURE pantalla azul Windows",                 "SistemaOperativo"),
+    ("DPC_WATCHDOG_VIOLATION BSOD pantalla azul",                          "SistemaOperativo"),
+    ("BAD_POOL_HEADER error pantalla azul Windows",                         "SistemaOperativo"),
+    ("BAD_POOL_CALLER pantalla azul sistemática",                           "SistemaOperativo"),
+    ("NTFS_FILE_SYSTEM error al iniciar Windows",                           "SistemaOperativo"),
+    ("KMODE_EXCEPTION_NOT_HANDLED BSOD Windows",                           "SistemaOperativo"),
+    ("UNEXPECTED_KERNEL_MODE_TRAP pantalla azul",                           "SistemaOperativo"),
+    ("SYSTEM_THREAD_EXCEPTION_NOT_HANDLED BSOD",                           "SistemaOperativo"),
+    ("KERNEL_DATA_INPAGE_ERROR pantalla azul disco",                        "SistemaOperativo"),
+    ("WHEA_UNCORRECTABLE_ERROR pantalla azul hardware error",               "SistemaOperativo"),
+    ("CLOCK_WATCHDOG_TIMEOUT BSOD Windows pantalla azul",                   "SistemaOperativo"),
+    ("DRIVER_POWER_STATE_FAILURE pantalla azul Windows",                    "SistemaOperativo"),
+    ("VIDEO_TDR_FAILURE BSOD pantalla azul al jugar",                       "SistemaOperativo"),
+    ("error 0x000000EF CRITICAL_PROCESS_DIED Windows",                     "SistemaOperativo"),
+    ("error 0x0000007E pantalla azul Windows",                              "SistemaOperativo"),
+    ("error 0x0000000A IRQL_NOT_LESS_OR_EQUAL",                            "SistemaOperativo"),
+    ("error 0x00000050 PAGE_FAULT_IN_NONPAGED_AREA",                       "SistemaOperativo"),
+    ("error 0x0000003B SYSTEM_SERVICE_EXCEPTION",                          "SistemaOperativo"),
+    # Fallos del sistema operativo sin BSOD
+    ("Windows no arranca ciclo de reparación automática infinito",          "SistemaOperativo"),
+    ("Windows Update causó pantalla azul y el sistema no arranca más",      "SistemaOperativo"),
+    ("archivos de sistema Windows corruptos no puede arrancar",             "SistemaOperativo"),
+    ("el registro de Windows está corrupto y no inicia",                    "SistemaOperativo"),
+    ("Windows dice faltan archivos de sistema winload.efi",                 "SistemaOperativo"),
+    ("MBR corrupto Windows no puede arrancar desde disco",                  "SistemaOperativo"),
+    ("Windows está atascado en bucle de reparación automática",             "SistemaOperativo"),
+    ("Windows se reinicia solo con pantalla azul constantemente",           "SistemaOperativo"),
+    ("sfc scannow encontró archivos corruptos que no puede reparar",        "SistemaOperativo"),
+    ("Windows recovery environment no puede reparar el sistema",            "SistemaOperativo"),
+    ("bootmgr is missing Windows no puede iniciar",                        "SistemaOperativo"),
+    ("partición de sistema Windows dañada el equipo no bootea",            "SistemaOperativo"),
+    ("Windows no inicia después de actualización forzada",                  "SistemaOperativo"),
+    ("error winload.efi 0xc0000428 Windows no arranca",                    "SistemaOperativo"),
+    ("pantalla negra con cursor parpadeante al iniciar Windows",            "SistemaOperativo"),
+    ("Windows dice que necesita reparación y no puede hacerla",             "SistemaOperativo"),
 ]
 
 
@@ -431,8 +475,8 @@ class DiagnosticModel:
     """
 
     CATEGORIES = [
-        "Energia", "Video", "BIOS", "Almacenamiento",
-        "Red", "Audio", "Temperatura", "USB", "Drivers", "Corto",
+        "Energia", "Video", "BIOS", "Almacenamiento", "Red",
+        "Audio", "Temperatura", "USB", "Drivers", "Corto", "SistemaOperativo",
     ]
 
     # Categorías que requieren alerta urgente (no diagnóstico normal)

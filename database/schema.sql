@@ -477,4 +477,63 @@ INSERT INTO catalog_solutions (category, brand, series, solution_text, hardware_
 ('Energia', 'MSI', NULL,
  'Para batería en MSI: MSI Center → Battery Master permite configurar el umbral de carga (60%, 80% o 100%) para proteger la batería en uso prolongado enchufado. Si la batería no carga más del 80%: verifica que Battery Master no tenga activado el modo "Best for Battery". Los adaptadores MSI usan conectores propietarios de 7.4mm o 5.5mm — no son intercambiables entre familias. Si el adaptador no es reconocido: el sistema puede limitar el rendimiento de la GPU para protegerse.',
  '{"tools_required": ["MSI Center Battery Master"], "severity": "media"}'
+),
+
+-- ============================================================
+-- Soluciones: SistemaOperativo — BSOD y fallos de Windows
+-- ============================================================
+
+('SistemaOperativo', NULL, NULL,
+ 'PASO 1 — RECUPERAR DATOS ANTES DE FORMATEAR:
+Si Windows no arranca, NO formatees sin respaldar primero.
+- Opción A: Crea un USB booteable de Ubuntu (ubuntu.com) y arranca desde él. Copia tus archivos a un disco externo.
+- Opción B: Retira el disco del equipo, conéctalo como disco secundario USB usando un adaptador SATA-USB y copia los archivos desde otro PC.
+- Opción C: Usa MiniTool Power Data Recovery Boot Edition o Recuva Portable desde USB.
+
+PASO 2 — INTENTAR REPARAR WINDOWS (antes de formatear):
+Arranca desde USB de instalación de Windows → Reparar el equipo → Solucionar problemas → Opciones avanzadas:
+- Símbolo del sistema → sfc /scannow (repara archivos del sistema)
+- Símbolo del sistema → DISM /Online /Cleanup-Image /RestoreHealth
+- Símbolo del sistema → chkdsk C: /f /r (repara errores del disco)
+- Reparación de inicio → deja que Windows intente arreglarse automáticamente
+- Restaurar sistema → revierte a un punto anterior si existe
+- Desinstalar actualizaciones → elimina la última actualización problemática
+
+PASO 3 — FORMATEAR E INSTALAR WINDOWS LIMPIO:
+1. Descarga la herramienta de creación de medios: microsoft.com/software-download/windows11
+2. Crea un USB booteable de al menos 8GB
+3. Arranca desde el USB (F12/F2 en BIOS para cambiar orden de arranque)
+4. Selecciona Instalación personalizada → Elimina la partición del sistema → Crea nueva partición
+5. Instala Windows en la partición nueva
+6. Post-instalación: descarga drivers desde el sitio oficial del fabricante de tu equipo',
+ '{"tools_required": ["USB Windows", "MiniTool Recovery", "Recuva", "Ubuntu Live USB"], "severity": "alta", "requiere_backup": true}'
+),
+
+('SistemaOperativo', NULL, NULL,
+ 'GUÍA DE CÓDIGOS BSOD COMUNES Y SUS CAUSAS:
+
+CRITICAL_PROCESS_DIED (0x000000EF):
+Proceso crítico del sistema terminó. Causa: corrupción de archivos de Windows o malware.
+Solución: sfc /scannow, si persiste → formatear.
+
+INACCESSIBLE_BOOT_DEVICE (0x0000007B):
+Windows no encuentra la partición de arranque. Causa: cambio en configuración SATA (AHCI/RAID), disco dañado o driver de almacenamiento corrupto.
+Solución: verificar BIOS (modo SATA), ejecutar bootrec /rebuildbcd desde USB de recuperación.
+
+MEMORY_MANAGEMENT / PAGE_FAULT_IN_NONPAGED_AREA:
+Errores de gestión de memoria. Causa: RAM defectuosa, archivos de Windows corruptos, o driver problemático.
+Solución: Ejecuta Windows Memory Diagnostic, verifica RAM con MemTest86.
+
+KERNEL_SECURITY_CHECK_FAILURE:
+Archivos del kernel modificados o corruptos. Causa: malware, actualización fallida o corrupción del sistema.
+Solución: sfc /scannow + DISM, si persiste → formatear con antivirus desde USB.
+
+WHEA_UNCORRECTABLE_ERROR:
+Error de hardware no corregible. Causa: fallo de CPU, RAM o placa madre. REQUIERE diagnóstico de hardware.
+Solución: antes de formatear, verifica hardware con MemTest86 y diagnósticos del fabricante.
+
+NTFS_FILE_SYSTEM / BAD_POOL_HEADER:
+Corrupción del sistema de archivos. Causa: apagado forzado, disco con sectores defectuosos.
+Solución: chkdsk C: /f /r, si el disco tiene SMART alto → reemplazar disco antes de reinstalar.',
+ '{"tools_required": ["MemTest86", "sfc /scannow", "chkdsk", "bootrec"], "severity": "alta", "tipo": "referencia_bsod"}'
 );

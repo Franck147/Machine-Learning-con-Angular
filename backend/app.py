@@ -122,6 +122,46 @@ FALLBACK_SOLUTIONS: dict[str, str] = {
         "NO enciendas el equipo nuevamente. Desconecta la corriente inmediatamente. "
         "Lleva el equipo a un laboratorio de reparación electrónica especializado para diagnóstico profesional."
     ),
+    "SistemaOperativo": (
+        "DIAGNÓSTICO: Fallo del sistema operativo Windows (BSOD / corrupción). "
+        "PASO 1 — RECUPERAR DATOS PRIMERO: Arranca desde USB Linux live (Ubuntu) y copia tus archivos importantes a un disco externo. "
+        "Alternativa: usa Recuva, MiniTool Power Data Recovery o TestDisk desde otro equipo conectando el disco como secundario. "
+        "PASO 2 — INTENTAR REPARACIÓN (antes de formatear): "
+        "Arranca desde USB de Windows → Reparar el equipo → Solucionar problemas → "
+        "Símbolo del sistema → Ejecuta: sfc /scannow | DISM /Online /Cleanup-Image /RestoreHealth | chkdsk C: /f /r. "
+        "También prueba: Reparación de inicio, Restaurar sistema, Desinstalar actualizaciones recientes. "
+        "PASO 3 — FORMATEAR E INSTALAR WINDOWS (si la reparación falla): "
+        "Crea un USB booteable con la herramienta oficial (media.microsoft.com). "
+        "Arranca desde USB → Instalación personalizada → Elimina la partición del sistema → Instala limpio. "
+        "Post-instalación: descarga drivers desde el sitio oficial de tu fabricante usando el número de modelo."
+    ),
+}
+
+# Mapeo de códigos BSOD a descripción y causa más probable
+BSOD_CODES: dict[str, dict] = {
+    "CRITICAL_PROCESS_DIED":           {"causa": "Proceso crítico del sistema terminó inesperadamente", "gravedad": "Alta"},
+    "MEMORY_MANAGEMENT":               {"causa": "Error de gestión de memoria — puede ser RAM o Windows corrupto", "gravedad": "Alta"},
+    "INACCESSIBLE_BOOT_DEVICE":        {"causa": "Windows no encuentra la partición de arranque — revisar disco y BIOS", "gravedad": "Crítica"},
+    "SYSTEM_SERVICE_EXCEPTION":        {"causa": "Excepción en servicio del sistema — drivers o archivos corruptos", "gravedad": "Alta"},
+    "IRQL_NOT_LESS_OR_EQUAL":          {"causa": "Driver accedió a memoria no autorizada — drivers corruptos o incompatibles", "gravedad": "Alta"},
+    "PAGE_FAULT_IN_NONPAGED_AREA":     {"causa": "Error de memoria — RAM defectuosa o drivers problemáticos", "gravedad": "Alta"},
+    "KERNEL_SECURITY_CHECK_FAILURE":   {"causa": "Archivos del kernel modificados o corruptos — posible malware o corrupción", "gravedad": "Alta"},
+    "DPC_WATCHDOG_VIOLATION":          {"causa": "Proceso del sistema tardó demasiado — drivers o SSD/HDD lento", "gravedad": "Media"},
+    "BAD_POOL_HEADER":                 {"causa": "Corrupción del pool de memoria del kernel — drivers o RAM", "gravedad": "Alta"},
+    "BAD_POOL_CALLER":                 {"causa": "Driver hizo una asignación de memoria inválida", "gravedad": "Alta"},
+    "NTFS_FILE_SYSTEM":                {"causa": "Corrupción del sistema de archivos NTFS en el disco", "gravedad": "Alta"},
+    "KMODE_EXCEPTION_NOT_HANDLED":     {"causa": "Excepción en modo kernel no controlada — drivers o hardware", "gravedad": "Alta"},
+    "UNEXPECTED_KERNEL_MODE_TRAP":     {"causa": "Trampa inesperada en modo kernel — fallo de hardware o drivers", "gravedad": "Alta"},
+    "SYSTEM_THREAD_EXCEPTION_NOT_HANDLED": {"causa": "Hilo de sistema lanzó excepción — drivers corruptos", "gravedad": "Alta"},
+    "KERNEL_DATA_INPAGE_ERROR":        {"causa": "Error al leer datos del disco de paginación — HDD/SSD fallando", "gravedad": "Alta"},
+    "WHEA_UNCORRECTABLE_ERROR":        {"causa": "Error de hardware no corregible — CPU, RAM o placa", "gravedad": "Crítica"},
+    "CLOCK_WATCHDOG_TIMEOUT":          {"causa": "Procesador dejó de responder — overclocking, calor o CPU dañado", "gravedad": "Crítica"},
+    "DRIVER_POWER_STATE_FAILURE":      {"causa": "Driver no respondió correctamente al cambio de estado de energía", "gravedad": "Media"},
+    "VIDEO_TDR_FAILURE":               {"causa": "GPU no respondió — drivers de video o GPU defectuosa", "gravedad": "Alta"},
+    "0x0000007E":                      {"causa": "Error de sistema no manejado — drivers incompatibles", "gravedad": "Alta"},
+    "0x000000EF":                      {"causa": "CRITICAL_PROCESS_DIED — corrupción del sistema", "gravedad": "Alta"},
+    "0x0000000A":                      {"causa": "IRQL_NOT_LESS_OR_EQUAL — acceso inválido a memoria", "gravedad": "Alta"},
+    "0x00000050":                      {"causa": "PAGE_FAULT_IN_NONPAGED_AREA — RAM o driver corrupto", "gravedad": "Alta"},
 }
 
 # ---------------------------------------------------------------------------
@@ -330,6 +370,17 @@ def diagnosticar():
         mensaje[:50], marca, serie, category, confidence * 100
     )
 
+    # ── Datos extra para SistemaOperativo: detectar código BSOD en el mensaje ──
+    extra: dict = {}
+    if category == "SistemaOperativo":
+        texto_upper = (mensaje + " " + " ".join(contexto)).upper()
+        for code, info in BSOD_CODES.items():
+            if code.upper() in texto_upper:
+                extra["codigo_bsod"]     = code
+                extra["causa_bsod"]      = info["causa"]
+                extra["gravedad_bsod"]   = info["gravedad"]
+                break
+
     return jsonify({
         "categoria":      category,
         "confianza":      confidence,
@@ -339,6 +390,7 @@ def diagnosticar():
         "marca":          marca or None,
         "serie":          serie or None,
         "es_alerta":      False,
+        **extra,
     }), 200
 
 

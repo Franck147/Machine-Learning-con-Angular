@@ -23,6 +23,12 @@ export interface DiagnosisResult {
   es_alerta:         boolean;
   /** Pasos urgentes (solo cuando es_alerta === true) */
   pasos_urgentes?:   string[];
+  /** Código BSOD detectado en el mensaje (solo SistemaOperativo) */
+  codigo_bsod?:      string;
+  /** Descripción de la causa del código BSOD */
+  causa_bsod?:       string;
+  /** Nivel de gravedad del BSOD detectado */
+  gravedad_bsod?:    string;
 }
 
 export interface ClarificationResult {

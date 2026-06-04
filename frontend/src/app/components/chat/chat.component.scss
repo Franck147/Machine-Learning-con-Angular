@@ -220,6 +220,22 @@ $text-dim:    #5a5a5a;
   mat-icon { font-size: 13px; height: 13px; width: 13px; }
 }
 
+.bsod-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(21,101,192,.2);
+  color: #90caf9;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border: 1px solid rgba(21,101,192,.45);
+  font-family: monospace;
+  cursor: default;
+  mat-icon { font-size: 13px; height: 13px; width: 13px; color: #64b5f6; }
+
+  .bsod-severity { font-weight: 400; color: #ef9a9a; font-family: inherit; }
+}
+
 // ─── Barra de confianza ───────────────────────────────────
 .conf-bar-wrap {
   display: flex;

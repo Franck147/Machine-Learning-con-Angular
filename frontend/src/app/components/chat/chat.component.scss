@@ -331,6 +331,155 @@ $text-dim:    #5a5a5a;
   }
 }
 
+// ─── Comentario / opinión ─────────────────────────────────
+.feedback-section {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid $border;
+}
+
+.comment-box {
+  margin-top: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(239,83,80,.25);
+  background: rgba(239,83,80,.05);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  &.negative {
+    border-color: rgba(239,83,80,.4);
+    background: rgba(139,0,0,.08);
+  }
+}
+
+.comment-box-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: $red-light;
+  mat-icon { font-size: 15px; height: 15px; width: 15px; }
+}
+
+.comment-textarea {
+  width: 100%;
+  min-height: 70px;
+  background: $surface3;
+  border: 1px solid $border;
+  border-radius: 8px;
+  color: $text;
+  font-size: 0.85rem;
+  font-family: inherit;
+  padding: 8px 10px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+
+  &::placeholder { color: $text-dim; }
+  &:focus { border-color: $red-light; }
+}
+
+.cat-correction {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.cat-correction-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  color: $text-muted;
+  mat-icon { font-size: 13px; height: 13px; width: 13px; }
+}
+
+.cat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.1);
+  background: $surface3;
+  color: $text-muted;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.12s;
+
+  mat-icon { font-size: 12px; height: 12px; width: 12px; }
+
+  &:hover {
+    border-color: var(--cc, $red-light);
+    color: $text;
+  }
+
+  &.selected {
+    background: var(--cc, $red-light);
+    border-color: var(--cc, $red-light);
+    color: white;
+    font-weight: 600;
+  }
+}
+
+.comment-box-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+
+  .skip-btn {
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid $border;
+    background: transparent;
+    color: $text-dim;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.12s;
+    &:hover { color: $text; border-color: #555; }
+  }
+
+  .submit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 14px;
+    border-radius: 6px;
+    border: none;
+    background: $red;
+    color: white;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.12s;
+    mat-icon { font-size: 14px; height: 14px; width: 14px; }
+    &:hover { background: $red-light; }
+  }
+}
+
+.feedback-done {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0 2px;
+  font-size: 0.73rem;
+  color: $text-dim;
+  font-style: italic;
+  mat-icon { font-size: 14px; height: 14px; width: 14px; color: #66bb6a; }
+  strong { color: $text; font-style: normal; }
+}
+
 // ─── Panel de marcas ──────────────────────────────────────
 .brand-panel {
   background: $surface;

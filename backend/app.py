@@ -308,25 +308,46 @@ def diagnosticar():
 def feedback():
     """
     Body esperado:
-        { "log_id": "uuid", "util": true/false }
+        {
+            "log_id":               "uuid",
+            "util":                 true/false,
+            "comentario":           "texto libre",   // opcional
+            "categoria_correcta":   "BIOS"           // opcional — corrige el modelo
+        }
 
-    Actualiza el registro de diagnosis_logs con el feedback del usuario.
-    Los logs con feedback positivo pueden usarse para re-entrenar el modelo.
+    Si se provee categoria_correcta, ese par (query, categoria) es un ejemplo
+    de entrenamiento de alta calidad para re-entrenar el modelo.
     """
     data = request.get_json(silent=True)
 
     if not data or "log_id" not in data or "util" not in data:
         return jsonify({"error": "Campos requeridos: log_id, util"}), 400
 
-    log_id = str(data["log_id"])
-    util = bool(data["util"])
+    log_id              = str(data["log_id"])
+    util                = bool(data["util"])
+    comentario          = str(data.get("comentario", "")).strip() or None
+    categoria_correcta  = str(data.get("categoria_correcta", "")).strip() or None
+
+    # Validar que la categoría correcta sea válida si se provee
+    if categoria_correcta and categoria_correcta not in DiagnosticModel.CATEGORIES:
+        return jsonify({"error": f"Categoría inválida: {categoria_correcta}"}), 400
 
     if supabase:
         try:
-            supabase.table("diagnosis_logs").update({
-                "feedback_util": util,
-            }).eq("id", log_id).execute()
-            logger.info("Feedback '%s' registrado para log %s", util, log_id)
+            update_payload: dict = {"feedback_util": util}
+            if comentario:
+                update_payload["feedback_comment"] = comentario
+            if categoria_correcta:
+                update_payload["feedback_category_correction"] = categoria_correcta
+
+            supabase.table("diagnosis_logs").update(update_payload) \
+                .eq("id", log_id).execute()
+
+            logger.info(
+                "Feedback log=%s util=%s correccion=%s comentario=%s",
+                log_id, util, categoria_correcta,
+                f"'{comentario[:40]}'" if comentario else "None"
+            )
         except Exception as exc:
             logger.error("Error guardando feedback: %s", exc)
 

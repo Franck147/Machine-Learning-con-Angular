@@ -64,14 +64,17 @@ CREATE TABLE IF NOT EXISTS diagnosis_logs (
     solution_provided   TEXT,
     brand               VARCHAR(50) DEFAULT NULL,
     series              VARCHAR(100) DEFAULT NULL,
-    feedback_util       BOOLEAN     DEFAULT NULL,
-    created_at          TIMESTAMPTZ DEFAULT NOW()
+    feedback_util                  BOOLEAN      DEFAULT NULL,
+    feedback_comment               TEXT         DEFAULT NULL,
+    feedback_category_correction   VARCHAR(50)  DEFAULT NULL,
+    created_at                     TIMESTAMPTZ  DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_diagnosis_logs_created_at ON diagnosis_logs (created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_diagnosis_logs_category   ON diagnosis_logs (predicted_category);
-CREATE INDEX IF NOT EXISTS idx_diagnosis_logs_feedback   ON diagnosis_logs (feedback_util) WHERE feedback_util IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_diagnosis_logs_brand      ON diagnosis_logs (brand);
+CREATE INDEX IF NOT EXISTS idx_diagnosis_logs_created_at  ON diagnosis_logs (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_diagnosis_logs_category    ON diagnosis_logs (predicted_category);
+CREATE INDEX IF NOT EXISTS idx_diagnosis_logs_feedback    ON diagnosis_logs (feedback_util) WHERE feedback_util IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_diagnosis_logs_brand       ON diagnosis_logs (brand);
+CREATE INDEX IF NOT EXISTS idx_diagnosis_logs_correction  ON diagnosis_logs (feedback_category_correction) WHERE feedback_category_correction IS NOT NULL;
 
 -- ============================================================
 -- DATOS: Marcas

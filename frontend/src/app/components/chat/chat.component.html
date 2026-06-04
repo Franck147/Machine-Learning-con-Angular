@@ -92,25 +92,98 @@
               </div>
             }
 
-            <!-- Feedback -->
+            <!-- Feedback + Comentario -->
             @if (msg.diagnosis && msg.logId) {
-              <div class="feedback-actions">
+              <div class="feedback-section">
+
+                <!-- Paso 1: botones 👍 / 👎 -->
                 @if (msg.feedbackSent == null) {
-                  <span class="feedback-label">¿Fue útil este diagnóstico?</span>
-                  <button type="button" mat-icon-button class="feedback-btn positive"
-                    (click)="sendFeedback(i, true)" matTooltip="Sí, fue útil">
-                    <mat-icon>thumb_up</mat-icon>
-                  </button>
-                  <button type="button" mat-icon-button class="feedback-btn negative"
-                    (click)="sendFeedback(i, false)" matTooltip="No fue útil">
-                    <mat-icon>thumb_down</mat-icon>
-                  </button>
-                } @else {
-                  <span class="feedback-sent">
-                    <mat-icon>{{ msg.feedbackSent === 'positive' ? 'check_circle' : 'info' }}</mat-icon>
-                    {{ msg.feedbackSent === 'positive' ? 'Gracias, mejora el modelo' : 'Registrado para mejorar' }}
-                  </span>
+                  <div class="feedback-actions">
+                    <span class="feedback-label">¿Fue útil este diagnóstico?</span>
+                    <button type="button" mat-icon-button class="feedback-btn positive"
+                      (click)="selectFeedback(i, true)" matTooltip="Sí, fue útil">
+                      <mat-icon>thumb_up</mat-icon>
+                    </button>
+                    <button type="button" mat-icon-button class="feedback-btn negative"
+                      (click)="selectFeedback(i, false)" matTooltip="No fue útil">
+                      <mat-icon>thumb_down</mat-icon>
+                    </button>
+                  </div>
                 }
+
+                <!-- Paso 2: caja de comentario -->
+                @if (msg.feedbackSent != null) {
+                  @let cs = getCommentState(i);
+                  @if (cs && !cs.done) {
+                    <div class="comment-box" [class.negative]="msg.feedbackSent === 'negative'">
+
+                      <div class="comment-box-header">
+                        <mat-icon>chat_bubble_outline</mat-icon>
+                        <span>
+                          {{ msg.feedbackSent === 'positive'
+                             ? '¿Algo que agregar? (opcional)'
+                             : '¿Qué estuvo mal? Tu opinión mejora el modelo' }}
+                        </span>
+                      </div>
+
+                      <textarea
+                        class="comment-textarea"
+                        rows="3"
+                        title="Comentario sobre el diagnóstico"
+                        aria-label="Escribe tu opinión sobre el diagnóstico"
+                        [value]="cs.text"
+                        (input)="setCommentText(i, $any($event.target).value)"
+                        [placeholder]="msg.feedbackSent === 'positive'
+                          ? 'Ej: La solución funcionó. Solo tuve que actualizar el driver...'
+                          : 'Ej: La solución no funcionó porque mi GPU es integrada, no dedicada...'"
+                      ></textarea>
+
+                      <div class="cat-correction">
+                        <span class="cat-correction-label">
+                          <mat-icon>tune</mat-icon>
+                          ¿Era otro tipo de problema?
+                        </span>
+                        <div class="cat-chips">
+                          @for (cat of allCategories; track cat) {
+                            <button type="button" class="cat-chip"
+                              [class.selected]="cs.cat === cat"
+                              [style.--cc]="categoryColors[cat]"
+                              (click)="toggleCommentCat(i, cat)">
+                              <mat-icon>{{ categoryIcons[cat] }}</mat-icon>
+                              {{ cat }}
+                            </button>
+                          }
+                        </div>
+                      </div>
+
+                      <div class="comment-box-actions">
+                        <button type="button" class="skip-btn" (click)="skipComment(i)">
+                          Omitir
+                        </button>
+                        <button type="button" class="submit-btn" (click)="submitComment(i)">
+                          <mat-icon>send</mat-icon>
+                          Enviar opinión
+                        </button>
+                      </div>
+
+                    </div>
+                  }
+
+                  @if (cs?.done) {
+                    <div class="feedback-done">
+                      <mat-icon>{{ msg.feedbackSent === 'positive' ? 'check_circle' : 'info' }}</mat-icon>
+                      <span>
+                        {{ msg.feedbackSent === 'positive'
+                           ? 'Gracias, ayuda a mejorar el modelo'
+                           : 'Registrado — lo usaremos para mejorar la precisión' }}
+                        @if (cs.cat) {
+                          · corrección: <strong>{{ cs.cat }}</strong>
+                        }
+                      </span>
+                    </div>
+                  }
+                }
+
               </div>
             }
 

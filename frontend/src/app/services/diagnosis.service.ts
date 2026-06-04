@@ -31,8 +31,10 @@ export interface ClarificationResult {
 export type DiagnosisResponse = DiagnosisResult | ClarificationResult;
 
 export interface FeedbackRequest {
-  log_id: string;
-  util: boolean;
+  log_id:              string;
+  util:                boolean;
+  comentario?:         string;
+  categoria_correcta?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -58,9 +60,18 @@ export class DiagnosisService {
       .pipe(catchError(this.handleError));
   }
 
-  sendFeedback(log_id: string, util: boolean): Observable<{ ok: boolean }> {
+  sendFeedback(
+    log_id:             string,
+    util:               boolean,
+    comentario?:        string,
+    categoria_correcta?: string,
+  ): Observable<{ ok: boolean }> {
+    const body: FeedbackRequest = { log_id, util };
+    if (comentario?.trim())        body.comentario         = comentario.trim();
+    if (categoria_correcta?.trim()) body.categoria_correcta = categoria_correcta.trim();
+
     return this.http
-      .post<{ ok: boolean }>(this.apiFeedback, { log_id, util } satisfies FeedbackRequest)
+      .post<{ ok: boolean }>(this.apiFeedback, body)
       .pipe(catchError(this.handleError));
   }
 

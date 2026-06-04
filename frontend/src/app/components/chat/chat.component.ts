@@ -200,6 +200,18 @@ const CATEGORY_COLORS: Record<string, string> = {
   Drivers:        '#78909c',
 };
 
+// ─── Estado del comentario por mensaje ────────────────────────────────────────
+export interface CommentState {
+  /** Caja de comentario visible */
+  open:        boolean;
+  /** Texto del comentario libre */
+  text:        string;
+  /** Categoría seleccionada como corrección (null = no se corrige) */
+  cat:         string | null;
+  /** true cuando ya se envió o se omitió */
+  done:        boolean;
+}
+
 // ─── Mensaje ──────────────────────────────────────────────────────────────────
 export interface ChatMessage {
   type: 'user' | 'bot' | 'error';
@@ -272,6 +284,12 @@ export class ChatComponent {
   readonly canSend = computed(
     () => this.userInput().trim().length >= 3 && !this.isLoading()
   );
+
+  /** Mapa de estados de comentario, indexado por posición del mensaje */
+  readonly commentStates = signal<Map<number, CommentState>>(new Map());
+
+  /** Lista de categorías para el selector de corrección */
+  readonly allCategories = Object.keys(CATEGORY_ICONS);
 
   selectBrand(name: string): void {
     if (this.selectedBrand() === name) {
@@ -352,24 +370,95 @@ export class ChatComponent {
     });
   }
 
-  sendFeedback(msgIndex: number, util: boolean): void {
+  // ── Feedback + comentario ─────────────────────────────────────────────────
+
+  /** Paso 1: clic en 👍 / 👎 — marca selección y abre la caja de comentario */
+  selectFeedback(msgIndex: number, util: boolean): void {
     const msg = this.messages()[msgIndex];
     if (!msg?.logId || msg.feedbackSent != null) return;
 
+    // Marcar selección en UI (optimistic)
     this.messages.update(list =>
       list.map((m, i) =>
         i === msgIndex ? { ...m, feedbackSent: util ? 'positive' : 'negative' } : m
       )
     );
-    this.diagnosisService.sendFeedback(msg.logId, util).subscribe({
+
+    // Abrir caja de comentario
+    this.commentStates.update(map => {
+      const next = new Map(map);
+      next.set(msgIndex, { open: true, text: '', cat: null, done: false });
+      return next;
+    });
+  }
+
+  /** Actualiza el texto del comentario mientras el usuario escribe */
+  setCommentText(msgIndex: number, text: string): void {
+    this.commentStates.update(map => {
+      const next = new Map(map);
+      const cur  = next.get(msgIndex);
+      if (cur) next.set(msgIndex, { ...cur, text });
+      return next;
+    });
+  }
+
+  /** Selecciona/deselecciona una categoría de corrección */
+  toggleCommentCat(msgIndex: number, cat: string): void {
+    this.commentStates.update(map => {
+      const next = new Map(map);
+      const cur  = next.get(msgIndex);
+      if (cur) next.set(msgIndex, { ...cur, cat: cur.cat === cat ? null : cat });
+      return next;
+    });
+  }
+
+  /** Paso 2: envía feedback + comentario + corrección de categoría */
+  submitComment(msgIndex: number): void {
+    const msg   = this.messages()[msgIndex];
+    const state = this.commentStates().get(msgIndex);
+    if (!msg?.logId || !state) return;
+
+    const util    = msg.feedbackSent === 'positive';
+    const comment = state.text.trim() || undefined;
+    const catCorr = state.cat || undefined;
+
+    this.diagnosisService.sendFeedback(msg.logId, util, comment, catCorr).subscribe({
+      next: () => {
+        this.commentStates.update(map => {
+          const next = new Map(map);
+          next.set(msgIndex, { ...state, done: true });
+          return next;
+        });
+      },
       error: () => {
-        this.messages.update(list =>
-          list.map((m, i) =>
-            i === msgIndex ? { ...m, feedbackSent: null } : m
-          )
-        );
+        // Si falla, cerrar igual para no bloquear al usuario
+        this.commentStates.update(map => {
+          const next = new Map(map);
+          next.set(msgIndex, { ...state, done: true });
+          return next;
+        });
       },
     });
+  }
+
+  /** Omitir comentario: envía solo el feedback sin texto adicional */
+  skipComment(msgIndex: number): void {
+    const msg   = this.messages()[msgIndex];
+    const state = this.commentStates().get(msgIndex);
+    if (!msg?.logId || !state) return;
+
+    const util = msg.feedbackSent === 'positive';
+    this.diagnosisService.sendFeedback(msg.logId, util).subscribe();
+
+    this.commentStates.update(map => {
+      const next = new Map(map);
+      next.set(msgIndex, { ...state, done: true });
+      return next;
+    });
+  }
+
+  getCommentState(msgIndex: number): CommentState | undefined {
+    return this.commentStates().get(msgIndex);
   }
 
   onKeydown(event: KeyboardEvent): void {

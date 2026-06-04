@@ -1,203 +1,211 @@
 <div class="chat-wrapper">
-  <mat-card class="chat-card">
+  <div class="chat-card">
 
-    <!-- Encabezado -->
-    <mat-card-header class="chat-header">
-      <mat-icon mat-card-avatar class="header-icon">computer</mat-icon>
-      <mat-card-title>Asistente de Diagnóstico</mat-card-title>
-      <mat-card-subtitle>Hardware Troubleshooting con IA · 9 categorías · 6 marcas</mat-card-subtitle>
-    </mat-card-header>
+    <!-- ── HEADER ──────────────────────────────────────────────────────────── -->
+    <header class="chat-header">
+      <div class="header-main">
+        <div class="header-icon">
+          <mat-icon>memory</mat-icon>
+        </div>
+        <div class="header-info">
+          <h1 class="header-title">Diagnóstico Hardware IA</h1>
+          <p class="header-subtitle">Motor: {{ systemStats.algoritmo }} · TF-IDF</p>
+        </div>
+        <div class="header-dot online" matTooltip="Backend activo"></div>
+      </div>
+      <div class="header-stats">
+        <span class="stat-pill"><mat-icon>school</mat-icon>{{ systemStats.ejemplos | number }} ejemplos</span>
+        <span class="stat-pill"><mat-icon>category</mat-icon>{{ systemStats.categorias }} categorías</span>
+        <span class="stat-pill"><mat-icon>devices</mat-icon>{{ systemStats.marcas }} marcas</span>
+        <span class="stat-pill accent"><mat-icon>database</mat-icon>Supabase</span>
+      </div>
+    </header>
 
-    <!-- Área de mensajes -->
-    <mat-card-content>
-      <div #chatContainer class="messages-container scrollbar-thin">
+    <!-- ── MENSAJES ─────────────────────────────────────────────────────────── -->
+    <div #chatContainer class="messages-container scrollbar-thin">
 
-        @for (msg of messages(); track msg.timestamp; let i = $index) {
-          <div class="message-row" [class.user-row]="msg.type === 'user'">
-            <div
-              class="bubble"
-              [ngClass]="[
-                msg.type + '-bubble',
-                msg.clarification ? 'clarification-bubble' : ''
-              ]"
-            >
+      @for (msg of messages(); track msg.timestamp; let i = $index) {
+        <div class="message-row" [class.user-row]="msg.type === 'user'">
+          <div class="bubble"
+            [ngClass]="[
+              msg.type + '-bubble',
+              msg.clarification ? 'clarification-bubble' : ''
+            ]">
 
-              <!-- Badge de categoría (diagnóstico exitoso) -->
-              @if (msg.diagnosis) {
-                <div class="diagnosis-header">
-                  <div
-                    class="category-badge"
-                    [style.background-color]="categoryColors[msg.diagnosis.categoria]"
-                    [matTooltip]="'Confianza: ' + confidencePercent(msg.diagnosis.confianza)"
-                  >
-                    <mat-icon>{{ categoryIcons[msg.diagnosis.categoria] || 'help_outline' }}</mat-icon>
-                    <span>{{ msg.diagnosis.categoria }}</span>
+            <!-- Diagnóstico exitoso: header con categoría + marca + barra de confianza -->
+            @if (msg.diagnosis) {
+              <div class="diagnosis-header">
+                <div class="category-badge"
+                  [style.--cat-color]="categoryColors[msg.diagnosis.categoria]">
+                  <mat-icon>{{ categoryIcons[msg.diagnosis.categoria] || 'help_outline' }}</mat-icon>
+                  <span>{{ msg.diagnosis.categoria }}</span>
+                </div>
+
+                @if (msg.marca) {
+                  <div class="brand-badge"
+                    [matTooltip]="'Solución específica para ' + msg.marca + (msg.serie ? ' ' + msg.serie : '')">
+                    <mat-icon>laptop</mat-icon>
+                    {{ msg.marca }}{{ msg.serie ? ' · ' + msg.serie : '' }}
                   </div>
+                }
+              </div>
 
-                  @if (msg.marca) {
-                    <div class="brand-badge" [matTooltip]="'Diagnóstico para ' + msg.marca + (msg.serie ? ' ' + msg.serie : '')">
-                      <mat-icon>laptop</mat-icon>
-                      <span>{{ msg.marca }}{{ msg.serie ? ' · ' + msg.serie : '' }}</span>
-                    </div>
-                  }
+              <!-- Barra de confianza -->
+              <div class="conf-bar-wrap"
+                [matTooltip]="'Confianza del modelo: ' + confidencePercent(msg.diagnosis.confianza)">
+                <div class="conf-bar-track">
+                  <div class="conf-bar-fill"
+                    [class]="confidenceClass(msg.diagnosis.confianza)"
+                    [style.width]="confidenceWidth(msg.diagnosis.confianza)">
+                  </div>
                 </div>
-              }
+                <span class="conf-value">{{ confidencePercent(msg.diagnosis.confianza) }}</span>
+              </div>
+            }
 
-              <!-- Encabezado de clarificación (baja confianza) -->
-              @if (msg.clarification) {
-                <div class="clarification-header">
-                  <mat-icon>help_outline</mat-icon>
-                  <span>Necesito más información</span>
-                  <span class="conf-hint">(máx. {{ confidencePercent(msg.clarification.confianza_maxima) }})</span>
-                </div>
-              }
+            <!-- Clarificación: baja confianza -->
+            @if (msg.clarification) {
+              <div class="clarification-header">
+                <mat-icon>help_outline</mat-icon>
+                <span>Necesito más información</span>
+                <span class="conf-hint">máx. {{ confidencePercent(msg.clarification.confianza_maxima) }}</span>
+              </div>
+            }
 
-              <!-- Texto del mensaje -->
-              <p class="bubble-text">{{ msg.text }}</p>
+            <!-- Texto -->
+            <p class="bubble-text">{{ msg.text }}</p>
 
-              <!-- Chips de probabilidades -->
-              @if (msg.diagnosis || msg.clarification) {
-                <div class="probabilities">
-                  <span class="prob-label">Probabilidades:</span>
-                  <mat-chip-set>
-                    @for (entry of (msg.diagnosis?.probabilidades ?? msg.clarification?.probabilidades) | keyvalue; track entry.key) {
-                      <mat-chip [style.background-color]="categoryColors[entry.key]" class="prob-chip">
-                        {{ entry.key }}: {{ confidencePercent(+entry.value) }}
-                      </mat-chip>
-                    }
-                  </mat-chip-set>
-                </div>
-              }
-
-              <!-- Feedback (solo diagnósticos con log_id) -->
-              @if (msg.diagnosis && msg.logId) {
-                <div class="feedback-actions">
-                  @if (msg.feedbackSent == null) {
-                    <span class="feedback-label">¿Fue útil este diagnóstico?</span>
-                    <button type="button" mat-icon-button class="feedback-btn positive"
-                      (click)="sendFeedback(i, true)" matTooltip="Sí, fue útil" aria-label="Diagnóstico útil">
-                      <mat-icon>thumb_up</mat-icon>
-                    </button>
-                    <button type="button" mat-icon-button class="feedback-btn negative"
-                      (click)="sendFeedback(i, false)" matTooltip="No fue útil" aria-label="Diagnóstico no útil">
-                      <mat-icon>thumb_down</mat-icon>
-                    </button>
-                  } @else {
-                    <span class="feedback-sent">
-                      <mat-icon>{{ msg.feedbackSent === 'positive' ? 'thumb_up' : 'thumb_down' }}</mat-icon>
-                      {{ msg.feedbackSent === 'positive' ? 'Gracias por tu feedback' : 'Lo tendremos en cuenta' }}
+            <!-- Probabilidades -->
+            @if (msg.diagnosis || msg.clarification) {
+              <div class="probabilities">
+                <span class="prob-label">Distribución de probabilidades</span>
+                <div class="prob-chips">
+                  @for (entry of (msg.diagnosis?.probabilidades ?? msg.clarification?.probabilidades) | keyvalue; track entry.key) {
+                    <span class="prob-chip"
+                      [style.--cat-color]="categoryColors[entry.key]"
+                      [matTooltip]="entry.key">
+                      <mat-icon>{{ categoryIcons[entry.key] }}</mat-icon>
+                      {{ confidencePercent(+entry.value) }}
                     </span>
                   }
                 </div>
-              }
+              </div>
+            }
 
-              <span class="bubble-time">{{ msg.timestamp | date: 'HH:mm' }}</span>
-            </div>
+            <!-- Feedback -->
+            @if (msg.diagnosis && msg.logId) {
+              <div class="feedback-actions">
+                @if (msg.feedbackSent == null) {
+                  <span class="feedback-label">¿Fue útil este diagnóstico?</span>
+                  <button type="button" mat-icon-button class="feedback-btn positive"
+                    (click)="sendFeedback(i, true)" matTooltip="Sí, fue útil">
+                    <mat-icon>thumb_up</mat-icon>
+                  </button>
+                  <button type="button" mat-icon-button class="feedback-btn negative"
+                    (click)="sendFeedback(i, false)" matTooltip="No fue útil">
+                    <mat-icon>thumb_down</mat-icon>
+                  </button>
+                } @else {
+                  <span class="feedback-sent">
+                    <mat-icon>{{ msg.feedbackSent === 'positive' ? 'check_circle' : 'info' }}</mat-icon>
+                    {{ msg.feedbackSent === 'positive' ? 'Gracias, mejora el modelo' : 'Registrado para mejorar' }}
+                  </span>
+                }
+              </div>
+            }
+
+            <span class="bubble-time">{{ msg.timestamp | date: 'HH:mm' }}</span>
           </div>
-        }
+        </div>
+      }
 
-        <!-- Indicador de carga -->
-        @if (isLoading()) {
-          <div class="message-row">
-            <div class="bubble bot-bubble loading-bubble">
-              <mat-spinner diameter="20" />
-              <span>Analizando síntoma{{ selectedBrand() ? ' para ' + selectedBrand() : '' }}…</span>
-            </div>
+      <!-- Carga -->
+      @if (isLoading()) {
+        <div class="message-row">
+          <div class="bubble bot-bubble loading-bubble">
+            <mat-spinner diameter="18"></mat-spinner>
+            <span>Analizando{{ selectedBrand() ? ' · ' + selectedBrand() : '' }}…</span>
           </div>
-        }
-      </div>
-    </mat-card-content>
+        </div>
+      }
+    </div>
 
-    <!-- ──────────────────────────────────────────────────────────────── -->
-    <!-- Selector de Marca / Serie                                        -->
-    <!-- ──────────────────────────────────────────────────────────────── -->
-    <div class="brand-selector">
-      <div class="brand-selector-label">
-        <mat-icon>laptop_mac</mat-icon>
-        <span>Tu equipo:</span>
+    <!-- ── SELECTOR DE MARCA / SERIE ────────────────────────────────────────── -->
+    <div class="brand-panel">
+
+      <div class="brand-panel-header">
+        <mat-icon>devices</mat-icon>
+        <span>Tu equipo <em>({{ brands.length }} marcas)</em></span>
         @if (selectedBrand()) {
-          <button type="button" class="clear-brand-btn" (click)="clearBrandSelection()"
-            matTooltip="Quitar selección">
+          <button type="button" class="clear-btn" (click)="clearBrandSelection()" matTooltip="Quitar selección">
             <mat-icon>close</mat-icon>
           </button>
         }
       </div>
 
-      <!-- Chips de marcas -->
+      <!-- Marcas -->
       <div class="brand-chips">
         @for (brand of brands; track brand.name) {
-          <button
-            type="button"
-            class="brand-chip"
+          <button type="button" class="brand-chip"
             [class.selected]="selectedBrand() === brand.name"
-            [style.--brand-color]="brand.color"
-            (click)="selectBrand(brand.name)"
-            [attr.aria-pressed]="selectedBrand() === brand.name"
-          >
+            [style.--bc]="brand.color"
+            (click)="selectBrand(brand.name)">
             {{ brand.name }}
           </button>
         }
       </div>
 
-      <!-- Chips de series (aparecen al seleccionar marca) -->
+      <!-- Series -->
       @if (selectedBrand() && availableSeries().length) {
-        <div class="series-chips">
-          @for (s of availableSeries(); track s.name) {
-            <button
-              type="button"
-              class="series-chip"
-              [class.selected]="selectedSeries() === s.name"
-              [class]="'series-chip type-' + s.type"
-              (click)="selectSeries(s.name)"
-              [attr.aria-pressed]="selectedSeries() === s.name"
-            >
-              {{ s.name }}
-            </button>
-          }
+        <div class="series-row">
+          <span class="series-label">Serie:</span>
+          <div class="series-chips">
+            @for (s of availableSeries(); track s.name) {
+              <button type="button" class="series-chip"
+                [class.selected]="selectedSeries() === s.name"
+                [class]="'series-chip type-' + s.type"
+                (click)="selectSeries(s.name)">
+                <mat-icon>{{ typeIcons[s.type] }}</mat-icon>
+                {{ s.name }}
+              </button>
+            }
+          </div>
         </div>
       }
 
       <!-- Selección activa -->
       @if (selectedBrand()) {
-        <div class="selection-active" [style.border-color]="selectedBrandColor()">
-          <mat-icon [style.color]="selectedBrandColor()">check_circle</mat-icon>
+        <div class="selection-active" [style.--bc]="selectedBrandColor()">
+          <mat-icon>check_circle</mat-icon>
           <span>
-            Diagnosticando para <strong>{{ selectedBrand() }}{{ selectedSeries() ? ' ' + selectedSeries() : '' }}</strong>
-            — recibirás soluciones específicas para tu equipo
+            Diagnosticando para
+            <strong>{{ selectedBrand() }}{{ selectedSeries() ? ' · ' + selectedSeries() : '' }}</strong>
           </span>
         </div>
       }
     </div>
 
-    <!-- Área de entrada -->
-    <mat-card-actions class="input-area">
+    <!-- ── INPUT ────────────────────────────────────────────────────────────── -->
+    <div class="input-area">
       <mat-form-field appearance="outline" class="input-field">
         <mat-label>Describe el problema de tu equipo…</mat-label>
-        <textarea
-          matInput
-          rows="2"
+        <textarea matInput rows="2"
           [value]="userInput()"
           (input)="userInput.set($any($event.target).value)"
           (keydown)="onKeydown($event)"
           [disabled]="isLoading()"
-          placeholder="Ej: El computador no enciende y hace pitidos"
-        ></textarea>
-        <mat-hint>Presiona Enter para enviar · Shift+Enter para nueva línea</mat-hint>
+          placeholder="Ej: pantalla negra, hace pitidos, se sobrecalienta…">
+        </textarea>
+        <mat-hint>Enter para enviar · Shift+Enter para nueva línea</mat-hint>
       </mat-form-field>
 
-      <button
-        type="button"
-        mat-fab
-        color="primary"
-        class="send-btn"
+      <button type="button" mat-fab class="send-btn"
         [disabled]="!canSend()"
         (click)="sendMessage()"
-        matTooltip="Enviar diagnóstico"
-        aria-label="Enviar"
-      >
+        matTooltip="Enviar diagnóstico">
         <mat-icon>send</mat-icon>
       </button>
-    </mat-card-actions>
+    </div>
 
-  </mat-card>
+  </div>
 </div>

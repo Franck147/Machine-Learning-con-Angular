@@ -24,9 +24,7 @@ import {
   ClarificationResult,
 } from '../../services/diagnosis.service';
 
-// -----------------------------------------------------------------------
-// Catálogo de marcas y series
-// -----------------------------------------------------------------------
+// ─── Marcas y series ──────────────────────────────────────────────────────────
 export interface BrandSeries { name: string; type: string; }
 export interface BrandInfo   { name: string; color: string; series: BrandSeries[]; }
 
@@ -40,6 +38,7 @@ const BRANDS_DATA: BrandInfo[] = [
       { name: 'Alienware', type: 'gaming'      },
       { name: 'OptiPlex',  type: 'desktop'     },
       { name: 'Precision', type: 'workstation' },
+      { name: 'Vostro',    type: 'laptop'      },
     ],
   },
   {
@@ -57,12 +56,12 @@ const BRANDS_DATA: BrandInfo[] = [
   {
     name: 'Lenovo', color: '#E2231A',
     series: [
-      { name: 'ThinkPad',    type: 'laptop'   },
-      { name: 'IdeaPad',     type: 'laptop'   },
-      { name: 'Legion',      type: 'gaming'   },
-      { name: 'Yoga',        type: 'laptop'   },
-      { name: 'ThinkCentre', type: 'desktop'  },
-      { name: 'IdeaCentre',  type: 'desktop'  },
+      { name: 'ThinkPad',    type: 'laptop'      },
+      { name: 'IdeaPad',     type: 'laptop'      },
+      { name: 'Legion',      type: 'gaming'      },
+      { name: 'Yoga',        type: 'laptop'      },
+      { name: 'ThinkCentre', type: 'desktop'     },
+      { name: 'IdeaCentre',  type: 'desktop'     },
     ],
   },
   {
@@ -97,6 +96,68 @@ const BRANDS_DATA: BrandInfo[] = [
     ],
   },
   {
+    name: 'Apple', color: '#A2AAAD',
+    series: [
+      { name: 'MacBook Air', type: 'laptop'      },
+      { name: 'MacBook Pro', type: 'laptop'      },
+      { name: 'Mac mini',    type: 'desktop'     },
+      { name: 'Mac Studio',  type: 'workstation' },
+      { name: 'iMac',        type: 'desktop'     },
+      { name: 'iPad',        type: 'laptop'      },
+    ],
+  },
+  {
+    name: 'Samsung', color: '#1428A0',
+    series: [
+      { name: 'Galaxy Book', type: 'laptop' },
+      { name: 'Galaxy Tab',  type: 'laptop' },
+    ],
+  },
+  {
+    name: 'Huawei', color: '#CF0A2C',
+    series: [
+      { name: 'MateBook', type: 'laptop' },
+      { name: 'MatePad',  type: 'laptop' },
+    ],
+  },
+  {
+    name: 'Toshiba', color: '#EA0E0E',
+    series: [
+      { name: 'Satellite', type: 'laptop' },
+      { name: 'Dynabook',  type: 'laptop' },
+    ],
+  },
+  {
+    name: 'Microsoft', color: '#737373',
+    series: [
+      { name: 'Surface Pro',    type: 'laptop' },
+      { name: 'Surface Laptop', type: 'laptop' },
+      { name: 'Surface Book',   type: 'laptop' },
+    ],
+  },
+  {
+    name: 'Xiaomi', color: '#FF6900',
+    series: [
+      { name: 'Mi Notebook', type: 'laptop' },
+      { name: 'Pad',         type: 'laptop' },
+    ],
+  },
+  {
+    name: 'Amazon', color: '#FF9900',
+    series: [
+      { name: 'Fire',    type: 'laptop' },
+      { name: 'Fire HD', type: 'laptop' },
+    ],
+  },
+  {
+    name: 'Gigabyte', color: '#E6242A',
+    series: [
+      { name: 'AORUS',    type: 'gaming'  },
+      { name: 'B Series', type: 'desktop' },
+      { name: 'Z Series', type: 'desktop' },
+    ],
+  },
+  {
     name: 'Generica', color: '#607D8B',
     series: [
       { name: 'PC Escritorio', type: 'desktop' },
@@ -106,27 +167,17 @@ const BRANDS_DATA: BrandInfo[] = [
   },
 ];
 
-// -----------------------------------------------------------------------
-// Interfaces de mensajes
-// -----------------------------------------------------------------------
-export interface ChatMessage {
-  type: 'user' | 'bot' | 'error';
-  text: string;
-  timestamp: Date;
-  diagnosis?:     DiagnosisResult;
-  clarification?: ClarificationResult;
-  logId?:         string | null;
-  feedbackSent?:  'positive' | 'negative' | null;
-  /** Marca/serie con que se realizó el diagnóstico */
-  marca?: string | null;
-  serie?: string | null;
-}
+// ─── Íconos por tipo de serie ─────────────────────────────────────────────────
+const TYPE_ICONS: Record<string, string> = {
+  laptop:      'laptop',
+  gaming:      'sports_esports',
+  desktop:     'desktop_windows',
+  workstation: 'engineering',
+};
 
-// -----------------------------------------------------------------------
-// Mapas de íconos y colores de categoría
-// -----------------------------------------------------------------------
+// ─── Categorías ───────────────────────────────────────────────────────────────
 const CATEGORY_ICONS: Record<string, string> = {
-  Energia:        'power',
+  Energia:        'bolt',
   Video:          'monitor',
   BIOS:           'memory',
   Almacenamiento: 'storage',
@@ -138,33 +189,38 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Energia:        '#e53935',
-  Video:          '#1e88e5',
-  BIOS:           '#8e24aa',
-  Almacenamiento: '#43a047',
-  Red:            '#00897b',
-  Audio:          '#f4511e',
-  Temperatura:    '#fb8c00',
-  USB:            '#6d4c41',
-  Drivers:        '#546e7a',
+  Energia:        '#ef5350',
+  Video:          '#42a5f5',
+  BIOS:           '#ab47bc',
+  Almacenamiento: '#66bb6a',
+  Red:            '#26a69a',
+  Audio:          '#ff7043',
+  Temperatura:    '#ffa726',
+  USB:            '#8d6e63',
+  Drivers:        '#78909c',
 };
 
-// -----------------------------------------------------------------------
-// Componente
-// -----------------------------------------------------------------------
+// ─── Mensaje ──────────────────────────────────────────────────────────────────
+export interface ChatMessage {
+  type: 'user' | 'bot' | 'error';
+  text: string;
+  timestamp: Date;
+  diagnosis?:     DiagnosisResult;
+  clarification?: ClarificationResult;
+  logId?:         string | null;
+  feedbackSent?:  'positive' | 'negative' | null;
+  marca?:         string | null;
+  serie?:         string | null;
+}
+
+// ─── Componente ───────────────────────────────────────────────────────────────
 @Component({
   selector: 'app-chat',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    MatCardModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressSpinnerModule,
-    MatChipsModule,
-    MatTooltipModule,
+    CommonModule, FormsModule,
+    MatCardModule, MatInputModule, MatButtonModule,
+    MatIconModule, MatProgressSpinnerModule, MatChipsModule, MatTooltipModule,
   ],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',
@@ -174,14 +230,23 @@ export class ChatComponent {
 
   private readonly diagnosisService = inject(DiagnosisService);
 
-  // ── Catálogo de marcas expuesto al template
-  readonly brands = BRANDS_DATA;
+  readonly brands      = BRANDS_DATA;
+  readonly typeIcons   = TYPE_ICONS;
+  readonly categoryIcons  = CATEGORY_ICONS;
+  readonly categoryColors = CATEGORY_COLORS;
 
-  // ── Mensajes del chat
+  // Stats del sistema
+  readonly systemStats = {
+    ejemplos:   2836,
+    categorias: 9,
+    marcas:     15,
+    algoritmo:  'LinearSVC',
+  };
+
   readonly messages = signal<ChatMessage[]>([
     {
       type: 'bot',
-      text: '¡Hola! Soy tu asistente de diagnóstico de hardware. Selecciona tu marca y serie (opcional) y luego describe el síntoma o falla de tu equipo.',
+      text: '¡Bienvenido al asistente de diagnóstico de hardware! Selecciona tu marca y serie para obtener soluciones específicas, luego describe el problema de tu equipo.',
       timestamp: new Date(),
     },
   ]);
@@ -189,9 +254,10 @@ export class ChatComponent {
   readonly userInput  = signal('');
   readonly isLoading  = signal(false);
 
-  // ── Selección de marca/serie
   readonly selectedBrand  = signal<string | null>(null);
   readonly selectedSeries = signal<string | null>(null);
+
+  private readonly pendingContext = signal<string[]>([]);
 
   readonly availableSeries = computed<BrandSeries[]>(() => {
     const b = this.selectedBrand();
@@ -200,20 +266,13 @@ export class ChatComponent {
 
   readonly selectedBrandColor = computed<string>(() => {
     const b = this.selectedBrand();
-    return b ? (BRANDS_DATA.find(br => br.name === b)?.color ?? '#546e7a') : '#546e7a';
+    return b ? (BRANDS_DATA.find(br => br.name === b)?.color ?? '#ef5350') : '#ef5350';
   });
-
-  // ── Contexto multi-turno
-  private readonly pendingContext = signal<string[]>([]);
 
   readonly canSend = computed(
     () => this.userInput().trim().length >= 3 && !this.isLoading()
   );
 
-  readonly categoryIcons  = CATEGORY_ICONS;
-  readonly categoryColors = CATEGORY_COLORS;
-
-  // ── Selección de marca
   selectBrand(name: string): void {
     if (this.selectedBrand() === name) {
       this.selectedBrand.set(null);
@@ -233,13 +292,12 @@ export class ChatComponent {
     this.selectedSeries.set(null);
   }
 
-  // ── Envío de mensaje
   sendMessage(): void {
-    const text = this.userInput().trim();
+    const text  = this.userInput().trim();
     if (!this.canSend() || !text) return;
 
-    const marca  = this.selectedBrand()  ?? undefined;
-    const serie  = this.selectedSeries() ?? undefined;
+    const marca   = this.selectedBrand()  ?? undefined;
+    const serie   = this.selectedSeries() ?? undefined;
     const context = this.pendingContext();
 
     this.messages.update(msgs => [
@@ -270,13 +328,13 @@ export class ChatComponent {
             ...msgs,
             {
               type: 'bot',
-              text:         diag.solucion,
-              timestamp:    new Date(),
-              diagnosis:    diag,
-              logId:        diag.log_id,
+              text: diag.solucion,
+              timestamp: new Date(),
+              diagnosis: diag,
+              logId: diag.log_id,
               feedbackSent: null,
-              marca:        diag.marca,
-              serie:        diag.serie,
+              marca: diag.marca,
+              serie: diag.serie,
             },
           ]);
         }
@@ -294,19 +352,15 @@ export class ChatComponent {
     });
   }
 
-  // ── Feedback
   sendFeedback(msgIndex: number, util: boolean): void {
     const msg = this.messages()[msgIndex];
     if (!msg?.logId || msg.feedbackSent != null) return;
 
     this.messages.update(list =>
       list.map((m, i) =>
-        i === msgIndex
-          ? { ...m, feedbackSent: util ? 'positive' : 'negative' }
-          : m
+        i === msgIndex ? { ...m, feedbackSent: util ? 'positive' : 'negative' } : m
       )
     );
-
     this.diagnosisService.sendFeedback(msg.logId, util).subscribe({
       error: () => {
         this.messages.update(list =>
@@ -327,6 +381,16 @@ export class ChatComponent {
 
   confidencePercent(value: number): string {
     return `${(value * 100).toFixed(0)}%`;
+  }
+
+  confidenceWidth(value: number): string {
+    return `${(value * 100).toFixed(1)}%`;
+  }
+
+  confidenceClass(value: number): string {
+    if (value >= 0.8) return 'high';
+    if (value >= 0.6) return 'medium';
+    return 'low';
   }
 
   private scrollToBottom(): void {

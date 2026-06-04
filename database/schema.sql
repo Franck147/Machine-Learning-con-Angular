@@ -145,9 +145,6 @@ INSERT INTO model_series (brand_name, series, type, description) VALUES
 
 INSERT INTO catalog_solutions (category, brand, series, solution_text, hardware_specs) VALUES
 
--- Energía genérica
-(NULL, NULL, NULL, NULL, NULL), -- placeholder, se insertan abajo con VALUES correctos
-
 ('Energia', NULL, NULL,
  'Verifica que el cable de alimentación esté correctamente conectado. Comprueba el fusible de la fuente de poder (PSU) y usa un multímetro para medir los voltajes (+12V, +5V, +3.3V). Si la PSU no responde, prueba con otra unidad. Asegúrate de que el conector ATX de 24 pines y el EPS de 8 pines estén correctamente insertados en la placa.',
  '{"components": ["PSU", "Motherboard", "Cable ATX"], "tools_required": ["Multímetro"], "severity": "alta"}'
@@ -228,9 +225,6 @@ INSERT INTO catalog_solutions (category, brand, series, solution_text, hardware_
  'Para BSOD causados por drivers: usa DDU (Display Driver Uninstaller) en modo seguro para limpiar completamente los drivers de GPU antes de reinstalar. Usa WhoCrashed para identificar qué driver causó el BSOD. Para revertir: Administrador de dispositivos → Propiedades → Controlador → Revertir.',
  '{"components": ["Drivers GPU", "Windows Update", "Modo seguro"], "tools_required": ["DDU", "WhoCrashed"], "severity": "alta"}'
 );
-
--- Eliminar el placeholder
-DELETE FROM catalog_solutions WHERE category IS NULL;
 
 -- ============================================================
 -- DATOS: Soluciones específicas por marca — DELL
